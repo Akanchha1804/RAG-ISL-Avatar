@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+
+# Dataset
+/Dataset/
+/Dataset.rar
+
+# Unnecessary Windows files
+desktop.ini
+~$*~$*
