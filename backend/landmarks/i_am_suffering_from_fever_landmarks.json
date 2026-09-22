@@ -1,0 +1,370 @@
+{
+  "video_name": "fever (2).MP4",
+  "fps": 25.0,
+  "frame_count": 72,
+  "width": 1920,
+  "height": 1080,
+  "processed_frames": 72,
+  "frames": [
+    {
+      "frame_index": 0,
+      "timestamp_ms": 0,
+      "hands": []
+    },
+    {
+      "frame_index": 1,
+      "timestamp_ms": 40,
+      "hands": []
+    },
+    {
+      "frame_index": 2,
+      "timestamp_ms": 80,
+      "hands": []
+    },
+    {
+      "frame_index": 3,
+      "timestamp_ms": 120,
+      "hands": []
+    },
+    {
+      "frame_index": 4,
+      "timestamp_ms": 160,
+      "hands": []
+    },
+    {
+      "frame_index": 5,
+      "timestamp_ms": 200,
+      "hands": []
+    },
+    {
+      "frame_index": 6,
+      "timestamp_ms": 240,
+      "hands": []
+    },
+    {
+      "frame_index": 7,
+      "timestamp_ms": 280,
+      "hands": []
+    },
+    {
+      "frame_index": 8,
+      "timestamp_ms": 320,
+      "hands": []
+    },
+    {
+      "frame_index": 9,
+      "timestamp_ms": 360,
+      "hands": []
+    },
+    {
+      "frame_index": 10,
+      "timestamp_ms": 400,
+      "hands": []
+    },
+    {
+      "frame_index": 11,
+      "timestamp_ms": 440,
+      "hands": []
+    },
+    {
+      "frame_index": 12,
+      "timestamp_ms": 480,
+      "hands": []
+    },
+    {
+      "frame_index": 13,
+      "timestamp_ms": 520,
+      "hands": []
+    },
+    {
+      "frame_index": 14,
+      "timestamp_ms": 560,
+      "hands": []
+    },
+    {
+      "frame_index": 15,
+      "timestamp_ms": 600,
+      "hands": []
+    },
+    {
+      "frame_index": 16,
+      "timestamp_ms": 640,
+      "hands": []
+    },
+    {
+      "frame_index": 17,
+      "timestamp_ms": 680,
+      "hands": []
+    },
+    {
+      "frame_index": 18,
+      "timestamp_ms": 720,
+      "hands": []
+    },
+    {
+      "frame_index": 19,
+      "timestamp_ms": 760,
+      "hands": []
+    },
+    {
+      "frame_index": 20,
+      "timestamp_ms": 800,
+      "hands": []
+    },
+    {
+      "frame_index": 21,
+      "timestamp_ms": 840,
+      "hands": []
+    },
+    {
+      "frame_index": 22,
+      "timestamp_ms": 880,
+      "hands": []
+    },
+    {
+      "frame_index": 23,
+      "timestamp_ms": 920,
+      "hands": []
+    },
+    {
+      "frame_index": 24,
+      "timestamp_ms": 960,
+      "hands": []
+    },
+    {
+      "frame_index": 25,
+      "timestamp_ms": 1000,
+      "hands": []
+    },
+    {
+      "frame_index": 26,
+      "timestamp_ms": 1040,
+      "hands": []
+    },
+    {
+      "frame_index": 27,
+      "timestamp_ms": 1080,
+      "hands": []
+    },
+    {
+      "frame_index": 28,
+      "timestamp_ms": 1120,
+      "hands": []
+    },
+    {
+      "frame_index": 29,
+      "timestamp_ms": 1160,
+      "hands": []
+    },
+    {
+      "frame_index": 30,
+      "timestamp_ms": 1200,
+      "hands": []
+    },
+    {
+      "frame_index": 31,
+      "timestamp_ms": 1240,
+      "hands": []
+    },
+    {
+      "frame_index": 32,
+      "timestamp_ms": 1280,
+      "hands": []
+    },
+    {
+      "frame_index": 33,
+      "timestamp_ms": 1320,
+      "hands": []
+    },
+    {
+      "frame_index": 34,
+      "timestamp_ms": 1360,
+      "hands": []
+    },
+    {
+      "frame_index": 35,
+      "timestamp_ms": 1400,
+      "hands": []
+    },
+    {
+      "frame_index": 36,
+      "timestamp_ms": 1440,
+      "hands": []
+    },
+    {
+      "frame_index": 37,
+      "timestamp_ms": 1480,
+      "hands": []
+    },
+    {
+      "frame_index": 38,
+      "timestamp_ms": 1520,
+      "hands": []
+    },
+    {
+      "frame_index": 39,
+      "timestamp_ms": 1560,
+      "hands": []
+    },
+    {
+      "frame_index": 40,
+      "timestamp_ms": 1600,
+      "hands": []
+    },
+    {
+      "frame_index": 41,
+      "timestamp_ms": 1640,
+      "hands": []
+    },
+    {
+      "frame_index": 42,
+      "timestamp_ms": 1680,
+      "hands": []
+    },
+    {
+      "frame_index": 43,
+      "timestamp_ms": 1720,
+      "hands": []
+    },
+    {
+      "frame_index": 44,
+      "timestamp_ms": 1760,
+      "hands": []
+    },
+    {
+      "frame_index": 45,
+      "timestamp_ms": 1800,
+      "hands": []
+    },
+    {
+      "frame_index": 46,
+      "timestamp_ms": 1840,
+      "hands": []
+    },
+    {
+      "frame_index": 47,
+      "timestamp_ms": 1880,
+      "hands": []
+    },
+    {
+      "frame_index": 48,
+      "timestamp_ms": 1920,
+      "hands": []
+    },
+    {
+      "frame_index": 49,
+      "timestamp_ms": 1960,
+      "hands": []
+    },
+    {
+      "frame_index": 50,
+      "timestamp_ms": 2000,
+      "hands": []
+    },
+    {
+      "frame_index": 51,
+      "timestamp_ms": 2040,
+      "hands": []
+    },
+    {
+      "frame_index": 52,
+      "timestamp_ms": 2080,
+      "hands": []
+    },
+    {
+      "frame_index": 53,
+      "timestamp_ms": 2120,
+      "hands": []
+    },
+    {
+      "frame_index": 54,
+      "timestamp_ms": 2160,
+      "hands": []
+    },
+    {
+      "frame_index": 55,
+      "timestamp_ms": 2200,
+      "hands": []
+    },
+    {
+      "frame_index": 56,
+      "timestamp_ms": 2240,
+      "hands": []
+    },
+    {
+      "frame_index": 57,
+      "timestamp_ms": 2280,
+      "hands": []
+    },
+    {
+      "frame_index": 58,
+      "timestamp_ms": 2320,
+      "hands": []
+    },
+    {
+      "frame_index": 59,
+      "timestamp_ms": 2360,
+      "hands": []
+    },
+    {
+      "frame_index": 60,
+      "timestamp_ms": 2400,
+      "hands": []
+    },
+    {
+      "frame_index": 61,
+      "timestamp_ms": 2440,
+      "hands": []
+    },
+    {
+      "frame_index": 62,
+      "timestamp_ms": 2480,
+      "hands": []
+    },
+    {
+      "frame_index": 63,
+      "timestamp_ms": 2520,
+      "hands": []
+    },
+    {
+      "frame_index": 64,
+      "timestamp_ms": 2560,
+      "hands": []
+    },
+    {
+      "frame_index": 65,
+      "timestamp_ms": 2600,
+      "hands": []
+    },
+    {
+      "frame_index": 66,
+      "timestamp_ms": 2640,
+      "hands": []
+    },
+    {
+      "frame_index": 67,
+      "timestamp_ms": 2680,
+      "hands": []
+    },
+    {
+      "frame_index": 68,
+      "timestamp_ms": 2720,
+      "hands": []
+    },
+    {
+      "frame_index": 69,
+      "timestamp_ms": 2760,
+      "hands": []
+    },
+    {
+      "frame_index": 70,
+      "timestamp_ms": 2800,
+      "hands": []
+    },
+    {
+      "frame_index": 71,
+      "timestamp_ms": 2840,
+      "hands": []
+    }
+  ]
+}

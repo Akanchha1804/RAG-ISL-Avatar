@@ -1,0 +1,705 @@
+{
+  "are you free today": {
+    "sentence": "are you free today",
+    "glosses": "YOU FREE TODAY",
+    "landmark_file": "are_you_free_today_landmarks.json",
+    "landmark_size_bytes": 86886,
+    "status": "ready"
+  },
+  "are you hiding something": {
+    "sentence": "are you hiding something",
+    "glosses": "YOU HIDE SOMETHING",
+    "landmark_file": "are_you_hiding_something_landmarks.json",
+    "landmark_size_bytes": 141265,
+    "status": "ready"
+  },
+  "bring water for me": {
+    "sentence": "bring water for me",
+    "glosses": "BRING WATER ME",
+    "landmark_file": "bring_water_for_me_landmarks.json",
+    "landmark_size_bytes": 136966,
+    "status": "ready"
+  },
+  "can i help you": {
+    "sentence": "can i help you",
+    "glosses": "I HELP YOU",
+    "landmark_file": "can_i_help_you_landmarks.json",
+    "landmark_size_bytes": 4577,
+    "status": "ready"
+  },
+  "can you repeat that please": {
+    "sentence": "can you repeat that please",
+    "glosses": "YOU REPEAT PLEASE",
+    "landmark_file": "can_you_repeat_that_please_landmarks.json",
+    "landmark_size_bytes": 9943,
+    "status": "ready"
+  },
+  "comb your hair": {
+    "sentence": "comb your hair",
+    "glosses": "COMB YOU HAIR",
+    "landmark_file": "comb_your_hair_landmarks.json",
+    "landmark_size_bytes": 8218,
+    "status": "ready"
+  },
+  "congratulations": {
+    "sentence": "congratulations",
+    "glosses": "CONGRATULATIIONS",
+    "landmark_file": "congratulations_landmarks.json",
+    "landmark_size_bytes": 4578,
+    "status": "ready"
+  },
+  "could you please talk slower": {
+    "sentence": "could you please talk slower",
+    "glosses": "YOU PLEASE TALK SLOWER",
+    "landmark_file": "could_you_please_talk_slower_landmarks.json",
+    "landmark_size_bytes": 4591,
+    "status": "ready"
+  },
+  "do me a favour": {
+    "sentence": "do me a favour",
+    "glosses": "DO ME FAVOUR",
+    "landmark_file": "do_me_a_favour_landmarks.json",
+    "landmark_size_bytes": 6802,
+    "status": "ready"
+  },
+  "do not abuse him": {
+    "sentence": "do not abuse him",
+    "glosses": "DONOT ABUSE HIM",
+    "landmark_file": "do_not_abuse_him_landmarks.json",
+    "landmark_size_bytes": 198175,
+    "status": "ready"
+  },
+  "do not be stubborn": {
+    "sentence": "do not be stubborn",
+    "glosses": "DONOT BE STUBBORN",
+    "landmark_file": "do_not_be_stubborn_landmarks.json",
+    "landmark_size_bytes": 6806,
+    "status": "ready"
+  },
+  "do not hurt me": {
+    "sentence": "do not hurt me",
+    "glosses": "DONOT HURT ME",
+    "landmark_file": "do_not_hurt_me_landmarks.json",
+    "landmark_size_bytes": 4577,
+    "status": "ready"
+  },
+  "do not make me angry": {
+    "sentence": "do not make me angry",
+    "glosses": "DO NOT MAKE ME ANGRY",
+    "landmark_file": "do_not_make_me_angry_landmarks.json",
+    "landmark_size_bytes": 4583,
+    "status": "ready"
+  },
+  "do not take it to the heart": {
+    "sentence": "do not take it to the heart",
+    "glosses": "DO NOT TAKE IT HEART",
+    "landmark_file": "do_not_take_it_to_the_heart_landmarks.json",
+    "landmark_size_bytes": 4590,
+    "status": "ready"
+  },
+  "do not worry": {
+    "sentence": "do not worry",
+    "glosses": "DO NOT WORRY",
+    "landmark_file": "do_not_worry_landmarks.json",
+    "landmark_size_bytes": 6800,
+    "status": "ready"
+  },
+  "do you need something": {
+    "sentence": "do you need something",
+    "glosses": "DO YOU NEED SOMETHING",
+    "landmark_file": "do_you_need_something_landmarks.json",
+    "landmark_size_bytes": 4584,
+    "status": "ready"
+  },
+  "go and sleep": {
+    "sentence": "go and sleep",
+    "glosses": "GO SLEEP",
+    "landmark_file": "go_and_sleep_landmarks.json",
+    "landmark_size_bytes": 4575,
+    "status": "ready"
+  },
+  "had your food": {
+    "sentence": "had your food",
+    "glosses": "YOUR FOOD",
+    "landmark_file": "had_your_food_landmarks.json",
+    "landmark_size_bytes": 8040,
+    "status": "ready"
+  },
+  "he came by train": {
+    "sentence": "he came by train",
+    "glosses": "HE CAME TRAIN",
+    "landmark_file": "he_came_by_train_landmarks.json",
+    "landmark_size_bytes": 9031,
+    "status": "ready"
+  },
+  "he is going into the room": {
+    "sentence": "He is going into the room",
+    "glosses": "HE GO  INTO  ROOM",
+    "landmark_file": "",
+    "status": "no_landmarks"
+  },
+  "he is on the way": {
+    "sentence": "he is on the way",
+    "glosses": "HE ON WAY",
+    "landmark_file": "he_is_on_the_way_landmarks.json",
+    "landmark_size_bytes": 2354,
+    "status": "ready"
+  },
+  "he she is my friend": {
+    "sentence": "he she is my friend",
+    "glosses": "HE SHE MY FRIEND",
+    "landmark_file": "he_she_is_my_friend_landmarks.json",
+    "landmark_size_bytes": 7508,
+    "status": "ready"
+  },
+  "he would be coming today": {
+    "sentence": "he would be coming today",
+    "glosses": "HE COMING TODAY",
+    "landmark_file": "he_would_be_coming_today_landmarks.json",
+    "landmark_size_bytes": 6812,
+    "status": "ready"
+  },
+  "help me": {
+    "sentence": "help me",
+    "glosses": "HELP ME",
+    "landmark_file": "help_me_landmarks.json",
+    "landmark_size_bytes": 9384,
+    "status": "ready"
+  },
+  "hi how are you": {
+    "sentence": "hi how are you",
+    "glosses": "HI HOW YOU",
+    "landmark_file": "hi_how_are_you_landmarks.json",
+    "landmark_size_bytes": 6802,
+    "status": "ready"
+  },
+  "how are things": {
+    "sentence": "how are things",
+    "glosses": "HOW THINGS",
+    "landmark_file": "how_are_things_landmarks.json",
+    "landmark_size_bytes": 2352,
+    "status": "ready"
+  },
+  "how can i help you": {
+    "sentence": "how can i help you",
+    "glosses": "HOW I HELP YOU",
+    "landmark_file": "how_can_i_help_you_landmarks.json",
+    "landmark_size_bytes": 2356,
+    "status": "ready"
+  },
+  "how can i trust you": {
+    "sentence": "how can i trust you",
+    "glosses": "HOW I TRUST YOU",
+    "landmark_file": "how_can_i_trust_you_landmarks.json",
+    "landmark_size_bytes": 4582,
+    "status": "ready"
+  },
+  "how dare you": {
+    "sentence": "how dare you",
+    "glosses": "HOW DARE YOU",
+    "landmark_file": "how_dare_you_landmarks.json",
+    "landmark_size_bytes": 6972,
+    "status": "ready"
+  },
+  "how old are you": {
+    "sentence": "how old are you",
+    "glosses": "HOW OLD YOU",
+    "landmark_file": "how_old_are_you_landmarks.json",
+    "landmark_size_bytes": 4578,
+    "status": "ready"
+  },
+  "i am (age)": {
+    "sentence": "i am (age)",
+    "glosses": "I (AGE)",
+    "landmark_file": "i_am_(age)_landmarks.json",
+    "landmark_size_bytes": 7779,
+    "status": "ready"
+  },
+  "i am afraid of that": {
+    "sentence": "i am afraid of that",
+    "glosses": "I AFRAID THAT",
+    "landmark_file": "i_am_afraid_of_that_landmarks.json",
+    "landmark_size_bytes": 11003,
+    "status": "ready"
+  },
+  "i am crying": {
+    "sentence": "i am crying",
+    "glosses": "I CRY",
+    "landmark_file": "i_am_crying_landmarks.json",
+    "landmark_size_bytes": 6799,
+    "status": "ready"
+  },
+  "i am feeling bored": {
+    "sentence": "i am feeling bored",
+    "glosses": "I FEELING BORED",
+    "landmark_file": "i_am_feeling_bored_landmarks.json",
+    "landmark_size_bytes": 6706,
+    "status": "ready"
+  },
+  "i am feeling cold": {
+    "sentence": "i am feeling cold",
+    "glosses": "I FEELING COLD",
+    "landmark_file": "i_am_feeling_cold_landmarks.json",
+    "landmark_size_bytes": 6972,
+    "status": "ready"
+  },
+  "i am fine. thank you sir": {
+    "sentence": "i am fine. thank you sir",
+    "glosses": "I FINE. THANK YOU SIR",
+    "landmark_file": "i_am_fine._thank_you_sir_landmarks.json",
+    "landmark_size_bytes": 9837,
+    "status": "ready"
+  },
+  "i am hungry": {
+    "sentence": "i am hungry",
+    "glosses": "I HUNGRY",
+    "landmark_file": "i_am_hungry_landmarks.json",
+    "landmark_size_bytes": 4576,
+    "status": "ready"
+  },
+  "i am in dilemma what to do": {
+    "sentence": "i am in dilemma what to do",
+    "glosses": "I IN DILEMMA WHAT TO DO",
+    "landmark_file": "i_am_in_dilemma_what_to_do_landmarks.json",
+    "landmark_size_bytes": 13794,
+    "status": "ready"
+  },
+  "i am not really sure": {
+    "sentence": "i am not really sure",
+    "glosses": "I NOT REALLY SURE",
+    "landmark_file": "i_am_not_really_sure_landmarks.json",
+    "landmark_size_bytes": 4583,
+    "status": "ready"
+  },
+  "i am really grateful": {
+    "sentence": "i am really grateful",
+    "glosses": "I REALLY GRATEFUL",
+    "landmark_file": "i_am_really_grateful_landmarks.json",
+    "landmark_size_bytes": 4583,
+    "status": "ready"
+  },
+  "i am sitting in the class": {
+    "sentence": "i am sitting in the class",
+    "glosses": "I SITTING IN THE CLASS",
+    "landmark_file": "i_am_sitting_in_the_class_landmarks.json",
+    "landmark_size_bytes": 4588,
+    "status": "ready"
+  },
+  "i am so sorry to hear that": {
+    "sentence": "i am so sorry to hear that",
+    "glosses": "I AM SO SORRY TO HEAR THAT",
+    "landmark_file": "i_am_so_sorry_to_hear_that_landmarks.json",
+    "landmark_size_bytes": 2364,
+    "status": "ready"
+  },
+  "i am suffering from fever": {
+    "sentence": "i am suffering from fever",
+    "glosses": "I SUFFERING FROM FEVER",
+    "landmark_file": "i_am_suffering_from_fever_landmarks.json",
+    "landmark_size_bytes": 6528,
+    "status": "ready"
+  },
+  "i am tired": {
+    "sentence": "i am tired",
+    "glosses": "I TIRED",
+    "landmark_file": "i_am_tired_landmarks.json",
+    "landmark_size_bytes": 6798,
+    "status": "ready"
+  },
+  "i am very happy": {
+    "sentence": "i am very happy",
+    "glosses": "I VERY HAPPY",
+    "landmark_file": "i_am_very_happy_landmarks.json",
+    "landmark_size_bytes": 4578,
+    "status": "ready"
+  },
+  "i can not help you there": {
+    "sentence": "i can not help you there",
+    "glosses": "I NOT HELP YOU THERE",
+    "landmark_file": "i_can_not_help_you_there_landmarks.json",
+    "landmark_size_bytes": 4587,
+    "status": "ready"
+  },
+  "i do not agree": {
+    "sentence": "i do not agree",
+    "glosses": "I DONOT AGREE",
+    "landmark_file": "i_do_not_agree_landmarks.json",
+    "landmark_size_bytes": 9202,
+    "status": "ready"
+  },
+  "i do not like it": {
+    "sentence": "i do not like it",
+    "glosses": "I DO NOT LIKE IT",
+    "landmark_file": "i_do_not_like_it_landmarks.json",
+    "landmark_size_bytes": 7951,
+    "status": "ready"
+  },
+  "i do not mean it": {
+    "sentence": "i do not mean it",
+    "glosses": "I DO NOT MEAN IT",
+    "landmark_file": "i_do_not_mean_it_landmarks.json",
+    "landmark_size_bytes": 6804,
+    "status": "ready"
+  },
+  "i dont agree": {
+    "sentence": "i dont agree",
+    "glosses": "I DONT AGREE",
+    "landmark_file": "i_dont_agree_landmarks.json",
+    "landmark_size_bytes": 9021,
+    "status": "ready"
+  },
+  "i enjoyed a lot": {
+    "sentence": "i enjoyed a lot",
+    "glosses": "I ENJOYED A LOT",
+    "landmark_file": "i_enjoyed_a_lot_landmarks.json",
+    "landmark_size_bytes": 7507,
+    "status": "ready"
+  },
+  "i got hurt": {
+    "sentence": "i got hurt",
+    "glosses": "I GOT HURT",
+    "landmark_file": "i_got_hurt_landmarks.json",
+    "landmark_size_bytes": 8578,
+    "status": "ready"
+  },
+  "i like you i love you": {
+    "sentence": "i like you i love you",
+    "glosses": "I LIKE YOU I LOVE YOU",
+    "landmark_file": "i_like_you_i_love_you_landmarks.json",
+    "landmark_size_bytes": 6798,
+    "status": "ready"
+  },
+  "i need water": {
+    "sentence": "i need water",
+    "glosses": "I NEED WATER",
+    "landmark_file": "i_need_water_landmarks.json",
+    "landmark_size_bytes": 6798,
+    "status": "ready"
+  },
+  "i promise": {
+    "sentence": "i promise",
+    "glosses": "I PROMISE",
+    "landmark_file": "i_promise_landmarks.json",
+    "landmark_size_bytes": 4572,
+    "status": "ready"
+  },
+  "i really appreciate it": {
+    "sentence": "i really appreciate it",
+    "glosses": "I REALLY APPRECIATE IT",
+    "landmark_file": "i_really_appreciate_it_landmarks.json",
+    "landmark_size_bytes": 4585,
+    "status": "ready"
+  },
+  "i somehow got to know about it": {
+    "sentence": "i somehow got to know about it",
+    "glosses": "I SOMEHOW GOT KNOW ABOUT IT",
+    "landmark_file": "i_somehow_got_to_know_about_it_landmarks.json",
+    "landmark_size_bytes": 8951,
+    "status": "ready"
+  },
+  "i was stopped by some one": {
+    "sentence": "i was stopped by some one",
+    "glosses": "I STOPPED BY SOMEONE",
+    "landmark_file": "i_was_stopped_by_some_one_landmarks.json",
+    "landmark_size_bytes": 11289,
+    "status": "ready"
+  },
+  "it does not make any difference to me": {
+    "sentence": "it does not make any difference to me",
+    "glosses": "IT DO NOT MAKE ANY DIFFERENCE TO ME",
+    "landmark_file": "it_does_not_make_any_difference_to_me_landmarks.json",
+    "landmark_size_bytes": 13977,
+    "status": "ready"
+  },
+  "it was nice chatting with you": {
+    "sentence": "it was nice chatting with you",
+    "glosses": "IT NICE CHAT WITH YOU",
+    "landmark_file": "it_was_nice_chatting_with_you_landmarks.json",
+    "landmark_size_bytes": 9044,
+    "status": "ready"
+  },
+  "let him take time": {
+    "sentence": "let him take time",
+    "glosses": "LET HIM TAKE TIME",
+    "landmark_file": "let_him_take_time_landmarks.json",
+    "landmark_size_bytes": 6805,
+    "status": "ready"
+  },
+  "my name is xxxxxxxx": {
+    "sentence": "my name is xxxxxxxx",
+    "glosses": "MY NAME XXXXXXXX",
+    "landmark_file": "my_name_is_xxxxxxxx_landmarks.json",
+    "landmark_size_bytes": 7788,
+    "status": "ready"
+  },
+  "nice to meet you": {
+    "sentence": "nice to meet you",
+    "glosses": "NICE MEET YOU",
+    "landmark_file": "nice_to_meet_you_landmarks.json",
+    "landmark_size_bytes": 10653,
+    "status": "ready"
+  },
+  "no need to worry dont worry": {
+    "sentence": "No need to worry dont worry",
+    "glosses": "NO NEED WORRY DONT WORRY",
+    "landmark_file": "",
+    "status": "no_landmarks"
+  },
+  "now onwards he will never hurt you": {
+    "sentence": "now onwards he will never hurt you",
+    "glosses": "NOW ONWARDS HE NEVER HURT YOU",
+    "landmark_file": "now_onwards_he_will_never_hurt_you_landmarks.json",
+    "landmark_size_bytes": 11817,
+    "status": "ready"
+  },
+  "pour some more water into the glass": {
+    "sentence": "pour some more water into the glass",
+    "glosses": "POUR SOME MORE WATER INTO THE GLASS",
+    "landmark_file": "pour_some_more_water_into_the_glass_landmarks.json",
+    "landmark_size_bytes": 8396,
+    "status": "ready"
+  },
+  "prepare the bed": {
+    "sentence": "prepare the bed",
+    "glosses": "PREPARE BED",
+    "landmark_file": "prepare_the_bed_landmarks.json",
+    "landmark_size_bytes": 8662,
+    "status": "ready"
+  },
+  "serve the food": {
+    "sentence": "serve the food",
+    "glosses": "SERVE FOOD",
+    "landmark_file": "serve_the_food_landmarks.json",
+    "landmark_size_bytes": 10192,
+    "status": "ready"
+  },
+  "shall we go outside": {
+    "sentence": "shall we go outside",
+    "glosses": "WE GO OUTSIDE",
+    "landmark_file": "shall_we_go_outside_landmarks.json",
+    "landmark_size_bytes": 8307,
+    "status": "ready"
+  },
+  "speak softly": {
+    "sentence": "speak softly",
+    "glosses": "SPEAK SOFTLY",
+    "landmark_file": "speak_softly_landmarks.json",
+    "landmark_size_bytes": 7419,
+    "status": "ready"
+  },
+  "take care of yourself": {
+    "sentence": "take care of yourself",
+    "glosses": "TAKE CARE OF YOURSELF",
+    "landmark_file": "take_care_of_yourself_landmarks.json",
+    "landmark_size_bytes": 8935,
+    "status": "ready"
+  },
+  "tell me truth": {
+    "sentence": "tell me truth",
+    "glosses": "TELL ME TRUTH",
+    "landmark_file": "tell_me_truth_landmarks.json",
+    "landmark_size_bytes": 6801,
+    "status": "ready"
+  },
+  "thank you so much": {
+    "sentence": "thank you so much",
+    "glosses": "THANK YOU SO MUCH",
+    "landmark_file": "thank_you_so_much_landmarks.json",
+    "landmark_size_bytes": 9754,
+    "status": "ready"
+  },
+  "that is so kind of you": {
+    "sentence": "that is so kind of you",
+    "glosses": "THAT KIND YOU",
+    "landmark_file": "that_is_so_kind_of_you_landmarks.json",
+    "landmark_size_bytes": 9021,
+    "status": "ready"
+  },
+  "this place is beautiful": {
+    "sentence": "This place is beautiful",
+    "glosses": "THIS PLACE BEAUTIFUL",
+    "landmark_file": "",
+    "status": "no_landmarks"
+  },
+  "try to understand": {
+    "sentence": "try to understand",
+    "glosses": "TRY TO UNDERSTAND",
+    "landmark_file": "try_to_understand_landmarks.json",
+    "landmark_size_bytes": 6805,
+    "status": "ready"
+  },
+  "turn on light turn off light": {
+    "sentence": "turn on light turn off light",
+    "glosses": "TURN ON LIGHT TURN OFF LIGHT",
+    "landmark_file": "turn_on_light_turn_off_light_landmarks.json",
+    "landmark_size_bytes": 6708,
+    "status": "ready"
+  },
+  "we are all with you": {
+    "sentence": "we are all with you",
+    "glosses": "WE ALL WITH YOU",
+    "landmark_file": "we_are_all_with_you_landmarks.json",
+    "landmark_size_bytes": 10276,
+    "status": "ready"
+  },
+  "wear the shirt": {
+    "sentence": "wear the shirt",
+    "glosses": "WEAR SHIRT",
+    "landmark_file": "wear_the_shirt_landmarks.json",
+    "landmark_size_bytes": 6261,
+    "status": "ready"
+  },
+  "what are you doing": {
+    "sentence": "what are you doing",
+    "glosses": "WHAT YOU DO",
+    "landmark_file": "what_are_you_doing_landmarks.json",
+    "landmark_size_bytes": 8410,
+    "status": "ready"
+  },
+  "what did you tell him": {
+    "sentence": "what did you tell him",
+    "glosses": "WHAT YOU TELL HIM",
+    "landmark_file": "what_did_you_tell_him_landmarks.json",
+    "landmark_size_bytes": 7506,
+    "status": "ready"
+  },
+  "what do you do": {
+    "sentence": "what do you do",
+    "glosses": "WHAT YOU DO",
+    "landmark_file": "what_do_you_do_landmarks.json",
+    "landmark_size_bytes": 8317,
+    "status": "ready"
+  },
+  "what do you think": {
+    "sentence": "what do you think",
+    "glosses": "WHAT DO YOU THINK",
+    "landmark_file": "what_do_you_think_landmarks.json",
+    "landmark_size_bytes": 8943,
+    "status": "ready"
+  },
+  "what do you want to become": {
+    "sentence": "what do you want to become",
+    "glosses": "WHAT DO YOU WANT BECOME",
+    "landmark_file": "what_do_you_want_to_become_landmarks.json",
+    "landmark_size_bytes": 7686,
+    "status": "ready"
+  },
+  "what happened": {
+    "sentence": "what happened",
+    "glosses": "WHAT HAPPENED",
+    "landmark_file": "what_happened_landmarks.json",
+    "landmark_size_bytes": 8483,
+    "status": "ready"
+  },
+  "what have you planned for your career": {
+    "sentence": "what have you planned for your career",
+    "glosses": "WHAT HAVE YOU PLAN YOUR CAREER",
+    "landmark_file": "what_have_you_planned_for_your_career_landmarks.json",
+    "landmark_size_bytes": 13161,
+    "status": "ready"
+  },
+  "what is your phone number": {
+    "sentence": "what is your phone number",
+    "glosses": "WHAT YOUR PHONE NUMBER",
+    "landmark_file": "what_is_your_phone_number_landmarks.json",
+    "landmark_size_bytes": 13272,
+    "status": "ready"
+  },
+  "what you want": {
+    "sentence": "what you want",
+    "glosses": "WHAT YOU WANT",
+    "landmark_file": "what_you_want_landmarks.json",
+    "landmark_size_bytes": 7960,
+    "status": "ready"
+  },
+  "when will the train leave": {
+    "sentence": "when will the train leave",
+    "glosses": "WHEN TRAIN LEAVE",
+    "landmark_file": "when_will_the_train_leave_landmarks.json",
+    "landmark_size_bytes": 10732,
+    "status": "ready"
+  },
+  "where are you from": {
+    "sentence": "where are you from",
+    "glosses": "WHERE YOU FROM",
+    "landmark_file": "where_are_you_from_landmarks.json",
+    "landmark_size_bytes": 8677,
+    "status": "ready"
+  },
+  "which college school are you from": {
+    "sentence": "which college school are you from",
+    "glosses": "WHICH COLLEGE SCHOOL YOU FROM",
+    "landmark_file": "",
+    "status": "no_landmarks"
+  },
+  "who are you": {
+    "sentence": "who are you",
+    "glosses": "WHO YOU",
+    "landmark_file": "who_are_you_landmarks.json",
+    "landmark_size_bytes": 9568,
+    "status": "ready"
+  },
+  "why are you angry": {
+    "sentence": "why are you angry",
+    "glosses": "WHY YOU ANGRY",
+    "landmark_file": "why_are_you_angry_landmarks.json",
+    "landmark_size_bytes": 7952,
+    "status": "ready"
+  },
+  "why are you crying": {
+    "sentence": "why are you crying",
+    "glosses": "WHY YOU CRY",
+    "landmark_file": "why_are_you_crying_landmarks.json",
+    "landmark_size_bytes": 9023,
+    "status": "ready"
+  },
+  "why are you disappointed": {
+    "sentence": "why are you disappointed",
+    "glosses": "WHY YOU DISAPPOINTED",
+    "landmark_file": "why_are_you_disappointed_landmarks.json",
+    "landmark_size_bytes": 11099,
+    "status": "ready"
+  },
+  "you are bad": {
+    "sentence": "you are bad",
+    "glosses": "YOU BAD",
+    "landmark_file": "you_are_bad_landmarks.json",
+    "landmark_size_bytes": 6971,
+    "status": "ready"
+  },
+  "you are good": {
+    "sentence": "you are good",
+    "glosses": "YOU GOOD",
+    "landmark_file": "you_are_good_landmarks.json",
+    "landmark_size_bytes": 6438,
+    "status": "ready"
+  },
+  "you are welcome": {
+    "sentence": "you are welcome",
+    "glosses": "YOU WELCOME",
+    "landmark_file": "you_are_welcome_landmarks.json",
+    "landmark_size_bytes": 4661,
+    "status": "ready"
+  },
+  "you can do it": {
+    "sentence": "you can do it",
+    "glosses": "YOU DO IT",
+    "landmark_file": "you_can_do_it_landmarks.json",
+    "landmark_size_bytes": 8576,
+    "status": "ready"
+  },
+  "you do anything, i do not care": {
+    "sentence": "you do anything, i do not care",
+    "glosses": "YOU DO ANYTHING, I DO NOT CARE",
+    "landmark_file": "you_do_anything_i_do_not_care_landmarks.json",
+    "landmark_size_bytes": 15227,
+    "status": "ready"
+  },
+  "you need a medicine, take this one": {
+    "sentence": "you need a medicine, take this one",
+    "glosses": "YOU NEED A MEDICINE, TAKE THIS ONE",
+    "landmark_file": "you_need_a_medicine_take_this_one_landmarks.json",
+    "landmark_size_bytes": 10645,
+    "status": "ready"
+  }
+}
