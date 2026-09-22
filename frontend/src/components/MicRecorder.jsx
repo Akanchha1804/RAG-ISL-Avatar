@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 
-export default function MicRecorder({ onTranscript, onRecording }) {
+export default function MicRecorder({ onTranscript, onRecording, onAudioReady }) {
   const [isRecording, setIsRecording] = useState(false);
   const [audioURL, setAudioURL] = useState(null);
   const mediaRecorderRef = useRef(null);
@@ -21,7 +21,18 @@ export default function MicRecorder({ onTranscript, onRecording }) {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
         const url = URL.createObjectURL(blob);
         setAudioURL(url);
-        onRecording(blob);
+
+        if (onAudioReady) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = reader.result.split(',')[1];
+            onAudioReady(base64);
+          };
+          reader.readAsDataURL(blob);
+        } else if (onRecording) {
+          onRecording(blob);
+        }
+
         stream.getTracks().forEach(t => t.stop());
       };
 
@@ -31,7 +42,7 @@ export default function MicRecorder({ onTranscript, onRecording }) {
       console.error('Microphone error:', err);
       alert('Could not access microphone. Please allow microphone access.');
     }
-  }, [onRecording]);
+  }, [onRecording, onAudioReady]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {

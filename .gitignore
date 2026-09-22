@@ -10,6 +10,11 @@ __pycache__/
 backend/index/
 backend/.venv/
 backend/__pycache__/
+backend/models/isl_gloss_t5/
+
+# Notebooks
+notebooks/.ipynb_checkpoints/
+notebooks/__pycache__/
 
 # Frontend
 frontend/node_modules/

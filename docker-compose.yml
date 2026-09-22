@@ -1,6 +1,23 @@
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: isl_avatar
+      POSTGRES_USER: isl_user
+      POSTGRES_PASSWORD: isl_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-EXEC", "pg_isready -U isl_user -d isl_avatar"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: .
@@ -10,8 +27,13 @@ services:
     volumes:
       - ./ISL_MediaPipe/output_landmarks:/app/output_landmarks
       - ./ISL_MediaPipe/sentence_mapping.json:/app/sentence_mapping.json
+      - ./backend/models:/app/models
     environment:
       - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql+asyncpg://isl_user:isl_password@postgres:5432/isl_avatar
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   frontend:
     build:
@@ -23,4 +45,4 @@ services:
       - backend
 
 volumes:
-  backend_data:
+  postgres_data:

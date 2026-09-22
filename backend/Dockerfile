@@ -2,12 +2,12 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY backend/ .
 
-RUN mkdir -p landmarks index
+RUN mkdir -p landmarks index models/isl_gloss_t5
 
 EXPOSE 8000
 
