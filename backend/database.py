@@ -4,7 +4,7 @@ from sqlalchemy.orm import DeclarativeBase
 
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
-    "postgresql+asyncpg://isl_user:isl_password@localhost:5432/isl_avatar"
+    "postgresql+asyncpg://isl_user:isl_password@localhost:5433/isl_avatar"
 )
 
 engine = create_async_engine(DATABASE_URL, echo=False, pool_size=20, max_overflow=10)

@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import get_db, engine, Base
+from database import get_db, engine, Base, AsyncSessionLocal
 from crud import log_translation
 
 # =====================================================
@@ -52,6 +52,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[Startup] Database not available: {e}")
         print("[Startup] Running without database - translations won't be persisted.")
+    try:
+        loop = asyncio.get_event_loop()
+        async def prefetch():
+            await loop.run_in_executor(None, lambda: __import__("rag", fromlist=["search"]))
+            print("[Startup] RAG module prefetched.")
+        await prefetch()
+    except Exception as e:
+        print(f"[Startup] RAG prefetch skipped: {e}")
     yield
 
 # =====================================================
