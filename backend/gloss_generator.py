@@ -1,18 +1,30 @@
 """
 Gloss Generator Module.
 Uses fine-tuned Flan-T5-small for English-to-ISL gloss generation.
-Falls back to RAG/word-by-word if model not available.
+
+RAG-conditioned generation:
+  - When use_rag=True and retrieved examples are supplied, the retrieved
+    (English sentence -> ISL gloss) pairs are prepended to the model input as
+    few-shot context, so retrieval actually influences generation.
+  - When use_rag=False the model receives only the original sentence in the
+    format it was fine-tuned on: "translate English to ISL: <sentence>".
+
+The base fine-tuning format (notebooks/finetune_t5.py) is preserved as the
+final line of every prompt so the trained model still sees its anchor prefix.
 """
 
-import os
 from pathlib import Path
 
-BACKEND_DIR = Path(__file__).resolve().parent
-MODEL_DIR = BACKEND_DIR / "models" / "isl_gloss_t5"
+from paths import get_paths
+
+_paths = get_paths()
+MODEL_DIR = _paths.model_dir
 
 _model = None
 _tokenizer = None
 _model_available = False
+
+TRAINING_PREFIX = "translate English to ISL: "
 
 
 def is_model_available():
@@ -53,18 +65,68 @@ def load_model():
         return False
 
 
-def generate_gloss(english_sentence: str, max_length: int = 64) -> str:
+def build_prompt(
+    english_sentence: str,
+    retrieved_examples: list | None = None,
+    use_rag: bool = True,
+) -> str:
+    """Build the generator input.
+
+    RAG on  (use_rag=True, examples present):
+        Examples:
+        EN: <retrieved_sentence> -> ISL: <retrieved_glosses>
+        ...
+        translate English to ISL: <query sentence>
+
+    RAG off (use_rag=False or no examples):
+        translate English to ISL: <query sentence>
+    """
+    query_line = f"{TRAINING_PREFIX}{english_sentence}"
+
+    if not use_rag or not retrieved_examples:
+        return query_line
+
+    lines = ["Examples:"]
+    for example in retrieved_examples:
+        sentence = (example or {}).get("sentence", "")
+        glosses = (example or {}).get("glosses", "")
+        if sentence and glosses:
+            lines.append(f"EN: {sentence} -> ISL: {glosses}")
+    lines.append(query_line)
+    return "\n".join(lines)
+
+
+def generate_gloss(
+    english_sentence: str,
+    retrieved_examples: list | None = None,
+    use_rag: bool = True,
+    max_length: int | None = None,
+) -> str | None:
+    """Generate an ISL gloss string for one English sentence.
+
+    Returns None when the model is unavailable or inference fails, so the
+    pipeline can fall back without crashing.
+    """
     if not load_model():
         return None
 
     try:
         import torch
 
-        input_text = f"translate English to ISL: {english_sentence}"
+        input_text = build_prompt(
+            english_sentence,
+            retrieved_examples=retrieved_examples,
+            use_rag=use_rag,
+        )
+
+        # RAG prompts are longer; keep the query line from being truncated.
+        if max_length is None:
+            max_length = 256 if (use_rag and retrieved_examples) else 128
+
         inputs = _tokenizer(
             input_text,
             return_tensors="pt",
-            max_length=128,
+            max_length=max_length,
             truncation=True,
         )
 
@@ -74,7 +136,7 @@ def generate_gloss(english_sentence: str, max_length: int = 64) -> str:
         with torch.no_grad():
             outputs = _model.generate(
                 **inputs,
-                max_length=max_length,
+                max_length=64,
                 num_beams=4,
                 early_stopping=True,
             )

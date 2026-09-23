@@ -1,0 +1,8 @@
+uid,gloss,duration,category
+uid-hi,hi,0.8,greeting
+uid-how,how,0.5,question
+uid-are,are,0.4,question
+uid-you,you,0.6,pronoun
+uid-thank,thank,0.7,gesture
+uid-wow,wow,1.0,expression
+uid-dup,you,0.9,pronoun

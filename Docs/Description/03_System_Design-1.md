@@ -17,16 +17,16 @@
                                      │ REST / WebSocket
                                      ▼
                          ┌─────────────────────────┐
-                         │   Backend API            │
-                         │   (FastAPI)               │
+                         │ Backend API             │
+                         │ (FastAPI)               │
                          └───────────┬──────────────┘
                                      │
         ┌────────────────────────────┼────────────────────────────┐
         ▼                            ▼                             ▼
 ┌───────────────┐          ┌───────────────────┐         ┌──────────────────┐
 │ STT Module     │          │ RAG Retrieval      │         │ Gloss Generation  │
-│ Distil-Whisper │  text →  │ MiniLM embeddings   │ examples│ Flan-T5 /         │
-│                │          │ + FAISS index       │────────▶│ mT5               │
+│ faster-whisper │  text →  │ MiniLM embeddings   │ examples│ Flan-T5-small      │
+│ (distil-small) │          │ + FAISS index       │────────▶│ (use_rag few-shot)│
 └───────────────┘          └───────────────────┘         └────────┬─────────┘
                                                                      │ gloss sequence
                                                                      ▼
@@ -57,22 +57,20 @@
 | Gloss Generation Module | Generate ISL gloss sequence using retrieved context |
 | Animation Mapping Module | Map gloss tokens to clips, blend transitions |
 | Avatar Renderer | Play animation sequence on rigged 3D model |
-| MCP Wrapper (optional) | Expose pipeline as a callable tool for external systems |
 
 ### A.3 Technology Stack
 | Layer | Technology |
 |---|---|
 | Frontend | React + Tailwind CSS |
 | Backend | FastAPI (Python) |
-| Speech Recognition | Distil-Whisper |
+| Speech Recognition | faster-whisper (`distil-small.en`) |
 | Embeddings | sentence-transformers (MiniLM) |
 | Vector Database | FAISS |
-| Gloss Generator | Fine-tuned Flan-T5/mT5 |
+| Gloss Generator | Fine-tuned Flan-T5-small (weights via Colab; graceful fallback without weights) |
 | Deep Learning Framework | PyTorch + HuggingFace `transformers` |
 | Avatar Engine | Unity (WebGL build) or Three.js |
 | Relational Database | PostgreSQL |
 | Deployment | Docker |
-| Optional Integration | MCP server wrapper |
 
 ### A.4 Design Principles
 - **Modularity:** Each pipeline stage is independently testable and replaceable (e.g., swap in a different fine-tuned seq2seq model without touching retrieval or animation code).
@@ -85,7 +83,7 @@
 
 ### B.1 STT Module
 - **Input:** Audio stream (WAV/PCM from browser mic) or uploaded audio file
-- **Process:** Distil-Whisper inference → transcript string
+- **Process:** faster-whisper (`distil-small.en`) inference → transcript string
 - **Output:** `{ "transcript": str, "confidence": float, "language": str }`
 - **Error handling:** On low-confidence transcription, prompt user to confirm/edit text before proceeding
 
@@ -98,22 +96,22 @@
   1. Embed incoming sentence
   2. `index.search(query_embedding, k=5)` → top-k nearest sentence-gloss pairs
   3. Return retrieved pairs with similarity scores
-- **Output:** List of `{ "sentence": str, "gloss": str, "score": float }`
+- **Output:** List of `{ "sentence": str, "glosses": str, "landmark_file": str, "similarity": float, "distance": float }` (`similarity = 1/(1+L2)`, exact match = `1.0`)
 
 ### B.3 Gloss Generation Module
 - **Input:** User sentence + retrieved examples (few-shot context)
 - **Prompt structure (conceptual):**
   ```
-  Examples:
-  EN: <retrieved_sentence_1> → GLOSS: <retrieved_gloss_1>
-  EN: <retrieved_sentence_2> → GLOSS: <retrieved_gloss_2>
+  translate English to ISL:
+  EN: <retrieved_sentence_1> -> ISL: <retrieved_gloss_1>
+  EN: <retrieved_sentence_2> -> ISL: <retrieved_gloss_2>
   ...
-  Now translate:
-  EN: <user_sentence> → GLOSS:
+  EN: <user_sentence> ->
   ```
-- **Model:** Fine-tuned Flan-T5/mT5 on ISL-CSLTR and CISLR sentence-gloss pairs, prompted with retrieved context at inference time
+  (few-shot lines only when `use_rag`; trained prefix appended when Flan-T5 weights are present)
+- **Model:** Fine-tuned Flan-T5-small on ISL-CSLTR and CISLR sentence-gloss pairs (prefix `translate English to ISL: `), prompted with retrieved context at inference time
 - **Output:** Ordered gloss token sequence, e.g., `["TODAY", "I", "GO", "SCHOOL"]`
-- **Ablation mode:** Flag to bypass retrieved context (RAG off) for evaluation comparison
+- **Ablation mode:** Flag `use_rag: false` bypasses retrieved context (RAG off) for evaluation comparison; there is no in-app ablation endpoint
 
 ### B.4 Animation Mapping Module
 - **Input:** Gloss token sequence
@@ -132,10 +130,13 @@
 | Endpoint | Method | Purpose |
 |---|---|---|
 | `/api/transcribe` | POST | Audio → text |
-| `/api/translate` | POST | Text → gloss sequence (RAG-augmented) |
+| `/api/translate` | POST | Text → gloss sequence (RAG-augmented, `use_rag`/`top_k`) |
 | `/api/animate` | POST | Gloss sequence → clip playlist |
-| `/api/pipeline` (WebSocket) | WS | Full pipeline, streamed status updates |
-| `/api/eval/ablation` | POST | Run RAG-on vs. RAG-off comparison (dev/eval only) |
+| `/api/health` | GET | Model/DB/path/FAISS status |
+| `/api/pipeline/ws` | WS | Full pipeline, streamed stage updates |
+| `/api/avatar/ws` | WS | Avatar protocol (landmark file URL metadata; data via HTTP `/landmarks/...`) |
+
+Evaluation (RAG-on vs. RAG-off) is run offline against a held-out split — see Test Plan §4; no `/api/eval/ablation` endpoint exists.
 
 ### B.7 Data Flow Sequence (end-to-end)
 1. User speaks/types sentence
@@ -148,4 +149,5 @@
 - Empty/unintelligible audio → prompt re-recording
 - Sentence outside retrieval corpus domain → generation proceeds with lower-confidence fallback, logged for future corpus expansion
 - Gloss token with no matching clip → skipped with on-screen indicator ("sign unavailable for: X")
-- Backend/model load failure → health-check endpoint surfaces status to frontend before accepting requests
+- Backend/model load failure → health-check endpoint surfaces status (incl. `database_error`, missing Flan-T5 weights) to frontend before accepting requests
+- Avatar WS path traversal in `landmark_file` → rejected before file access; landmark payloads served over HTTP to avoid WS fragmentation

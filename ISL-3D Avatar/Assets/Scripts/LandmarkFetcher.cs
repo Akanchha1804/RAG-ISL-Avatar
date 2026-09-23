@@ -1,10 +1,18 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.Networking;
 
+/// <summary>
+/// Fetches landmark JSON from StreamingAssets or the backend and injects the
+/// parsed dataset into HandPoseMapper via SetDataset (no duplicate models).
+///
+/// Changes from the previous version:
+///   - Uses the shared LandmarkModels data types.
+///   - Wires SetDataset into HandPoseMapper after every successful load so the
+///     mapper actually animates what was fetched.
+/// </summary>
 public class LandmarkFetcher : MonoBehaviour
 {
     // ==========================================
@@ -31,47 +39,6 @@ public class LandmarkFetcher : MonoBehaviour
     public event Action<float> OnLoadProgress;
 
     // ==========================================
-    // DATA STRUCTURES (same as HandPoseMapper)
-    // ==========================================
-
-    [Serializable]
-    public class LandmarkPoint
-    {
-        public float x;
-        public float y;
-        public float z;
-    }
-
-    [Serializable]
-    public class HandData
-    {
-        public int hand_index;
-        public List<LandmarkPoint> landmarks;
-        public string handedness;
-        public float handedness_score;
-    }
-
-    [Serializable]
-    public class FrameData
-    {
-        public int frame_index;
-        public int timestamp_ms;
-        public List<HandData> hands;
-    }
-
-    [Serializable]
-    public class LandmarkDataset
-    {
-        public string video_name;
-        public float fps;
-        public int frame_count;
-        public int width;
-        public int height;
-        public int processed_frames;
-        public List<FrameData> frames;
-    }
-
-    // ==========================================
     // PRIVATE
     // ==========================================
 
@@ -85,20 +52,13 @@ public class LandmarkFetcher : MonoBehaviour
     void Start()
     {
         handPoseMapper = GetComponent<HandPoseMapper>();
-
         if (handPoseMapper == null)
-        {
             handPoseMapper = GetComponentInChildren<HandPoseMapper>();
-        }
 
         if (loadFromBackend)
-        {
             FetchLandmarksFromBackend(jsonFileName);
-        }
         else
-        {
             LoadLandmarksFromStreamingAssets(jsonFileName);
-        }
     }
 
     // ==========================================
@@ -115,7 +75,7 @@ public class LandmarkFetcher : MonoBehaviour
 
         if (!File.Exists(filePath))
         {
-            Debug.LogError("Landmark file not found: " + filePath);
+            Debug.LogError("LandmarkFetcher: file not found: " + filePath);
             OnLoadError?.Invoke("File not found: " + fileName);
             return;
         }
@@ -130,13 +90,13 @@ public class LandmarkFetcher : MonoBehaviour
     public void FetchLandmarksFromBackend(string fileName)
     {
         string url = backendUrl + landmarkEndpoint + fileName;
-        Debug.Log("Fetching landmarks from: " + url);
+        if (logResponses)
+            Debug.Log("LandmarkFetcher: fetching " + url);
         StartCoroutine(FetchRemoteFile(url));
     }
 
     public void FetchLandmarksBySentence(string sentence)
     {
-        string encoded = Uri.EscapeDataString(sentence);
         string url = backendUrl + "/api/translate";
         StartCoroutine(PostTranslateAndLoad(url, sentence));
     }
@@ -151,20 +111,21 @@ public class LandmarkFetcher : MonoBehaviour
 
         string json = File.ReadAllText(filePath);
         OnLoadProgress?.Invoke(0.5f);
-
         yield return null;
 
         currentDataset = JsonUtility.FromJson<LandmarkDataset>(json);
         OnLoadProgress?.Invoke(1f);
 
-        if (currentDataset != null && currentDataset.frames != null)
+        if (currentDataset != null && currentDataset.frames != null && currentDataset.frames.Count > 0)
         {
-            Debug.Log("Loaded " + currentDataset.frames.Count + " frames from file.");
+            if (logResponses)
+                Debug.Log($"LandmarkFetcher: loaded {currentDataset.frames.Count} frames from file.");
+            PushToMapper();
             OnLandmarksLoaded?.Invoke(currentDataset);
         }
         else
         {
-            Debug.LogError("Invalid landmark data.");
+            Debug.LogError("LandmarkFetcher: invalid landmark data.");
             OnLoadError?.Invoke("Invalid landmark data.");
         }
     }
@@ -176,12 +137,11 @@ public class LandmarkFetcher : MonoBehaviour
         using (UnityWebRequest request = UnityWebRequest.Get(url))
         {
             yield return request.SendWebRequest();
-
             OnLoadProgress?.Invoke(0.5f);
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError("Failed to fetch landmarks: " + request.error);
+                Debug.LogError("LandmarkFetcher: fetch failed: " + request.error);
                 OnLoadError?.Invoke(request.error);
                 yield break;
             }
@@ -192,14 +152,16 @@ public class LandmarkFetcher : MonoBehaviour
             currentDataset = JsonUtility.FromJson<LandmarkDataset>(json);
             OnLoadProgress?.Invoke(1f);
 
-            if (currentDataset != null && currentDataset.frames != null)
+            if (currentDataset != null && currentDataset.frames != null && currentDataset.frames.Count > 0)
             {
-                Debug.Log("Fetched " + currentDataset.frames.Count + " frames from backend.");
+                if (logResponses)
+                    Debug.Log($"LandmarkFetcher: fetched {currentDataset.frames.Count} frames from backend.");
+                PushToMapper();
                 OnLandmarksLoaded?.Invoke(currentDataset);
             }
             else
             {
-                Debug.LogError("Invalid landmark data from backend.");
+                Debug.LogError("LandmarkFetcher: invalid landmark data from backend.");
                 OnLoadError?.Invoke("Invalid landmark data.");
             }
         }
@@ -222,21 +184,23 @@ public class LandmarkFetcher : MonoBehaviour
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError("Translate request failed: " + request.error);
+                Debug.LogError("LandmarkFetcher: translate request failed: " + request.error);
                 OnLoadError?.Invoke(request.error);
                 yield break;
             }
 
-            TranslateResponse response = JsonUtility.FromJson<TranslateResponse>(request.downloadHandler.text);
+            TranslateResponse response =
+                JsonUtility.FromJson<TranslateResponse>(request.downloadHandler.text);
 
             if (response != null && !string.IsNullOrEmpty(response.landmark_file))
             {
-                Debug.Log("Matched: " + response.matched_sentence + " (method: " + response.method + ")");
+                if (logResponses)
+                    Debug.Log($"LandmarkFetcher: matched '{response.matched_sentence}' (method: {response.method})");
                 FetchLandmarksFromBackend(response.landmark_file);
             }
             else
             {
-                Debug.LogWarning("No landmark match for: " + sentence);
+                Debug.LogWarning("LandmarkFetcher: no landmark match for: " + sentence);
                 OnLoadError?.Invoke("No match found for: " + sentence);
             }
         }
@@ -260,16 +224,26 @@ public class LandmarkFetcher : MonoBehaviour
         }
     }
 
-    public LandmarkDataset GetCurrentDataset()
-    {
-        return currentDataset;
-    }
+    public LandmarkDataset GetCurrentDataset() => currentDataset;
 
-    public bool IsLoaded()
+    public bool IsLoaded() =>
+        currentDataset != null &&
+        currentDataset.frames != null &&
+        currentDataset.frames.Count > 0;
+
+    void PushToMapper()
     {
-        return currentDataset != null &&
-               currentDataset.frames != null &&
-               currentDataset.frames.Count > 0;
+        if (handPoseMapper == null)
+        {
+            handPoseMapper = GetComponent<HandPoseMapper>();
+            if (handPoseMapper == null)
+                handPoseMapper = GetComponentInChildren<HandPoseMapper>();
+        }
+
+        if (handPoseMapper != null && currentDataset != null)
+            handPoseMapper.SetDataset(currentDataset);
+        else if (logResponses)
+            Debug.Log("LandmarkFetcher: no HandPoseMapper found to receive dataset.");
     }
 
     // ==========================================

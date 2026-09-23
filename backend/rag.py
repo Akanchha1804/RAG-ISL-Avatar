@@ -1,27 +1,28 @@
 """
 RAG Retrieval Module.
-Uses sentence-transformers + FAISS to find similar ISL sentences.
+Uses sentence-transformers + FAISS to find similar ISL training examples.
+
+Similarity values follow similarity.distance_to_similarity():
+    similarity = 1 / (1 + L2_distance), range (0, 1].
+Exact string match has distance 0 and therefore similarity 1.0.
 """
 
 import json
-import os
+
 import numpy as np
 import faiss
-from pathlib import Path
 from sentence_transformers import SentenceTransformer
+
+from paths import get_paths
+from similarity import distance_to_similarity
 
 # =====================================================
 # PATHS
 # =====================================================
 
-BACKEND_DIR = Path(__file__).resolve().parent
-PROJECT_DIR = BACKEND_DIR.parent
-DATA_DIR = Path(os.environ.get("DATA_DIR", str(PROJECT_DIR)))
-MAPPING_FILE = DATA_DIR / "ISL_MediaPipe" / "sentence_mapping.json"
-
-if not MAPPING_FILE.exists():
-    MAPPING_FILE = BACKEND_DIR / "sentence_mapping.json"
-INDEX_DIR = BACKEND_DIR / "index"
+_paths = get_paths()
+MAPPING_FILE = _paths.mapping_file
+INDEX_DIR = _paths.index_dir
 INDEX_FILE = INDEX_DIR / "faiss.index"
 METADATA_FILE = INDEX_DIR / "metadata.json"
 
@@ -109,6 +110,12 @@ def load_index():
 
 
 def search(query: str, top_k: int = 5) -> list:
+    """Retrieve the top_k most similar corpus sentences for a query.
+
+    Returns a list of dicts ordered by descending similarity:
+        {sentence, glosses, landmark_file, similarity, distance}
+    similarity = 1 / (1 + L2_distance)  (see similarity.py).
+    """
     load_index()
 
     if _index is None or _index.ntotal == 0:
@@ -130,13 +137,11 @@ def search(query: str, top_k: int = 5) -> list:
         sentence = sentences[idx]
         entry = _metadata.get(sentence, {})
 
-        similarity = float(1 / (1 + dist))
-
         results.append({
             "sentence": sentence,
             "glosses": entry.get("glosses", ""),
             "landmark_file": entry.get("landmark_file", ""),
-            "similarity": round(similarity, 4),
+            "similarity": round(distance_to_similarity(float(dist)), 4),
             "distance": round(float(dist), 4)
         })
 

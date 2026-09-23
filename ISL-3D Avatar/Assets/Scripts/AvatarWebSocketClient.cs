@@ -1,11 +1,23 @@
 using System;
 using System.Collections;
+using System.IO;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
+/// <summary>
+/// WebSocket client for the Unity avatar endpoint (/api/avatar/ws).
+///
+/// Changes from the previous version:
+///   - Fragmented receive: accumulates chunks into a MemoryStream until
+///     EndOfMessage so large payloads are never truncated.
+///   - Handles the new "landmark_file" reply (file name + HTTP URL only;
+///     landmark data is fetched over HTTP, not pushed over WS).
+///   - landmark_update always reloads (previously skipped when the file
+///     name matched, which prevented re-playing the same gloss).
+/// </summary>
 public class AvatarWebSocketClient : MonoBehaviour
 {
     [Header("Server Configuration")]
@@ -13,6 +25,9 @@ public class AvatarWebSocketClient : MonoBehaviour
 
     [Header("References")]
     public HandPoseMapper handPoseMapper;
+
+    [Header("Landmark HTTP fallback")]
+    public string httpBaseUrl = "http://localhost:8000";
 
     private ClientWebSocket _webSocket;
     private CancellationTokenSource _cts;
@@ -73,21 +88,34 @@ public class AvatarWebSocketClient : MonoBehaviour
         {
             while (_webSocket.State == WebSocketState.Open && !_cts.Token.IsCancellationRequested)
             {
-                var result = await _webSocket.ReceiveAsync(
-                    new ArraySegment<byte>(buffer), _cts.Token);
+                // Accumulate fragmented messages until EndOfMessage.
+                using (var messageStream = new MemoryStream())
+                {
+                    WebSocketReceiveResult result;
+                    do
+                    {
+                        result = await _webSocket.ReceiveAsync(
+                            new ArraySegment<byte>(buffer), _cts.Token);
 
-                if (result.MessageType == WebSocketMessageType.Text)
-                {
-                    string json = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    HandleMessage(json);
-                }
-                else if (result.MessageType == WebSocketMessageType.Close)
-                {
-                    await _webSocket.CloseAsync(
-                        WebSocketCloseStatus.NormalClosure,
-                        "", _cts.Token);
-                    _isConnected = false;
-                    OnConnectionChanged?.Invoke(false);
+                        if (result.MessageType == WebSocketMessageType.Close)
+                        {
+                            await _webSocket.CloseAsync(
+                                WebSocketCloseStatus.NormalClosure, "", _cts.Token);
+                            _isConnected = false;
+                            OnConnectionChanged?.Invoke(false);
+                            return;
+                        }
+
+                        if (result.MessageType == WebSocketMessageType.Text)
+                            messageStream.Write(buffer, 0, result.Count);
+                    }
+                    while (!result.EndOfMessage && _webSocket.State == WebSocketState.Open);
+
+                    if (result.MessageType == WebSocketMessageType.Text)
+                    {
+                        string json = Encoding.UTF8.GetString(messageStream.ToArray());
+                        HandleMessage(json);
+                    }
                 }
             }
         }
@@ -109,33 +137,15 @@ public class AvatarWebSocketClient : MonoBehaviour
         {
             var message = JsonUtility.FromJson<AvatarMessage>(json);
 
-            if (message.type == "landmark_data")
+            if (message.type == "landmark_file")
             {
-                string landmarkFile = message.landmark_file;
-                _currentLandmarkFile = landmarkFile;
-
-                if (handPoseMapper != null)
-                {
-                    handPoseMapper.LoadLandmarkFile(landmarkFile);
-                }
-
-                OnLandmarkLoaded?.Invoke(landmarkFile);
-                Debug.Log($"[AvatarWS] Loaded landmark: {landmarkFile}");
+                // Server sends file name + URL only; load via mapper (StreamingAssets → HTTP).
+                ApplyLandmark(message.landmark_file, force: true);
             }
             else if (message.type == "landmark_update")
             {
-                string landmarkFile = message.landmark_file;
-                if (!string.IsNullOrEmpty(landmarkFile) && landmarkFile != _currentLandmarkFile)
-                {
-                    _currentLandmarkFile = landmarkFile;
-
-                    if (handPoseMapper != null)
-                    {
-                        handPoseMapper.LoadLandmarkFile(landmarkFile);
-                    }
-
-                    OnLandmarkLoaded?.Invoke(landmarkFile);
-                }
+                // Always reload so re-playing the same gloss restarts the animation.
+                ApplyLandmark(message.landmark_file, force: true);
             }
             else if (message.type == "error")
             {
@@ -147,6 +157,28 @@ public class AvatarWebSocketClient : MonoBehaviour
         {
             Debug.LogError($"[AvatarWS] Parse error: {e.Message}");
         }
+    }
+
+    private void ApplyLandmark(string landmarkFile, bool force)
+    {
+        if (string.IsNullOrEmpty(landmarkFile))
+            return;
+
+        if (!force && landmarkFile == _currentLandmarkFile)
+            return;
+
+        _currentLandmarkFile = landmarkFile;
+
+        if (handPoseMapper == null)
+            handPoseMapper = GetComponent<HandPoseMapper>();
+        if (handPoseMapper == null)
+            handPoseMapper = GetComponentInChildren<HandPoseMapper>();
+
+        if (handPoseMapper != null)
+            handPoseMapper.LoadLandmarkFile(landmarkFile);
+
+        OnLandmarkLoaded?.Invoke(landmarkFile);
+        Debug.Log($"[AvatarWS] Landmark requested: {landmarkFile}");
     }
 
     public async void RequestLandmark(string landmarkFile)

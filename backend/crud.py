@@ -31,6 +31,26 @@ async def log_translation(
     return record
 
 
+async def log_translation_background(**kwargs) -> None:
+    """Background-task entry point for persisting a translation.
+
+    Opens its OWN session inside the task. Sessions from request-scope
+    dependencies (or `async with AsyncSessionLocal()` blocks in the endpoint)
+    may already be closed by the time a BackgroundTask runs, so a session must
+    never be passed in from the endpoint.
+
+    Database failure is non-fatal for the academic demo: errors are logged
+    and swallowed so the API response is unaffected.
+    """
+    try:
+        from database import AsyncSessionLocal
+
+        async with AsyncSessionLocal() as session:
+            await log_translation(session, **kwargs)
+    except Exception as e:
+        print(f"[DB] Translation log skipped (non-fatal): {e}")
+
+
 async def get_translation_history(db: AsyncSession, limit: int = 50, offset: int = 0):
     result = await db.execute(
         select(TranslationHistory)

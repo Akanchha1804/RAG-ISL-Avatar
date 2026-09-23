@@ -4,20 +4,14 @@ Maps English words to CISLR gloss entries.
 """
 
 import csv
-import os
-from pathlib import Path
+
+from paths import get_paths
 
 # =====================================================
 # PATHS
 # =====================================================
 
-BACKEND_DIR = Path(__file__).resolve().parent
-PROJECT_DIR = BACKEND_DIR.parent
-DATA_DIR = Path(os.environ.get("DATA_DIR", str(PROJECT_DIR)))
-CISLR_CSV = DATA_DIR / "Dataset" / "data" / "cislr" / "dataset.csv"
-
-if not CISLR_CSV.exists():
-    CISLR_CSV = BACKEND_DIR / "dataset.csv"
+CISLR_CSV = get_paths().cislr_csv
 
 # =====================================================
 # GLOSS VOCABULARY

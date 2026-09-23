@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -16,7 +14,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -U isl_user -d isl_avatar"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   backend:
     build:
@@ -25,15 +23,29 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./ISL_MediaPipe/output_landmarks:/app/output_landmarks
-      - ./ISL_MediaPipe/sentence_mapping.json:/app/sentence_mapping.json
+      # paths.py with DATA_DIR=/data:
+      #   /data/ISL_MediaPipe/output_landmarks  -> landmarks (avatar HTTP)
+      #   /data/ISL_MediaPipe/sentence_mapping.json -> animation mapping
+      - ./ISL_MediaPipe/output_landmarks:/data/ISL_MediaPipe/output_landmarks:ro
+      - ./ISL_MediaPipe/sentence_mapping.json:/data/ISL_MediaPipe/sentence_mapping.json:ro
+      # optional Flan-T5 weights (gitignored; Colab output)
       - ./backend/models:/app/models
+      # rebuildable FAISS index cache
+      - ./backend/index:/app/index
     environment:
       - PYTHONUNBUFFERED=1
       - DATABASE_URL=postgresql+asyncpg://isl_user:isl_password@postgres:5432/isl_avatar
+      - DATA_DIR=/data
+      - ISL_WARMUP_MODELS=1
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=5)"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
 
   frontend:
     build:
@@ -42,7 +54,8 @@ services:
     ports:
       - "5173:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   postgres_data:

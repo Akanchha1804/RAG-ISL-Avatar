@@ -7,8 +7,10 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.0"
-      - key: DATA_DIR
-        value: /opt/render/project/src/backend
+      # rootDir=backend so only backend/ is present; paths.py falls back to
+      # backend-local landmarks/sentence_mapping/dataset.csv
       - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: ISL_WARMUP_MODELS
         value: "1"
     rootDir: backend
