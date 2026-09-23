@@ -16,6 +16,8 @@ backend/index/
 backend/.venv/
 backend/__pycache__/
 backend/models/isl_gloss_t5/
+backend/models/isl_gloss_t5.zip
+backend/models/*.zip
 
 # Notebooks
 notebooks/.ipynb_checkpoints/
