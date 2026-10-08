@@ -1,0 +1,75 @@
+.venv/
+__pycache__/
+*.pyc
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Dataset
+/Dataset/
+/Dataset.rar
+
+# Backend
+backend/index/
+backend/.venv/
+backend/__pycache__/
+backend/models/isl_gloss_t5/
+backend/models/isl_gloss_t5.zip
+backend/models/*.zip
+
+# Notebooks
+notebooks/.ipynb_checkpoints/
+notebooks/__pycache__/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Unity auto-generated
+desktop.ini
+~$*~$*
+
+# Unity auto-generated
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]serSettings/
+/[Mm]emoryCaptures/
+
+# Unity crash reports
+sysinfo.txt
+*.apk
+*.aab
+*.unitypackage
+*.app
+crashlytics-build.properties
+
+# IDE
+.vs/
+.vscode/
+*.csproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local run logs
+*.log

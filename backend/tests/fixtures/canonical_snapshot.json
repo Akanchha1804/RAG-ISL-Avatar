@@ -1,0 +1,897 @@
+{
+ "He is going into the room": {
+  "canonical": [
+   "HE",
+   "INTO",
+   "ROOM",
+   "GO"
+  ],
+  "dropped": []
+ },
+ "No need to worry dont worry": {
+  "canonical": [
+   "NEED",
+   "WORRY",
+   "WORRY",
+   "NO",
+   "NOT"
+  ],
+  "dropped": [
+   "DO"
+  ]
+ },
+ "This place is beautiful": {
+  "canonical": [
+   "THIS",
+   "PLACE",
+   "BEAUTIFUL"
+  ],
+  "dropped": []
+ },
+ "are you free today": {
+  "canonical": [
+   "TODAY",
+   "YOU",
+   "FREE"
+  ],
+  "dropped": []
+ },
+ "are you hiding something": {
+  "canonical": [
+   "YOU",
+   "SOMETHING",
+   "HIDE"
+  ],
+  "dropped": []
+ },
+ "bring water for me": {
+  "canonical": [
+   "WATER",
+   "ME",
+   "BRING"
+  ],
+  "dropped": []
+ },
+ "can i help you": {
+  "canonical": [
+   "I",
+   "YOU",
+   "HELP"
+  ],
+  "dropped": []
+ },
+ "can you repeat that please": {
+  "canonical": [
+   "YOU",
+   "PLEASE",
+   "REPEAT"
+  ],
+  "dropped": []
+ },
+ "comb your hair": {
+  "canonical": [
+   "YOU",
+   "HAIR",
+   "COMB"
+  ],
+  "dropped": []
+ },
+ "congratulations": {
+  "canonical": [
+   "CONGRATULATIIONS"
+  ],
+  "dropped": []
+ },
+ "could you please talk slower": {
+  "canonical": [
+   "YOU",
+   "PLEASE",
+   "SLOWER",
+   "TALK"
+  ],
+  "dropped": []
+ },
+ "do me a favour": {
+  "canonical": [
+   "ME",
+   "FAVOUR",
+   "DO"
+  ],
+  "dropped": []
+ },
+ "do not abuse him": {
+  "canonical": [
+   "HIM",
+   "ABUSE",
+   "NOT"
+  ],
+  "dropped": [
+   "DO"
+  ]
+ },
+ "do not be stubborn": {
+  "canonical": [
+   "STUBBORN",
+   "DO",
+   "NOT"
+  ],
+  "dropped": [
+   "BE"
+  ]
+ },
+ "do not hurt me": {
+  "canonical": [
+   "ME",
+   "HURT",
+   "NOT"
+  ],
+  "dropped": [
+   "DO"
+  ]
+ },
+ "do not make me angry": {
+  "canonical": [
+   "ME",
+   "ANGRY",
+   "MAKE",
+   "NOT"
+  ],
+  "dropped": [
+   "DO"
+  ]
+ },
+ "do not take it to the heart": {
+  "canonical": [
+   "IT",
+   "HEART",
+   "TAKE",
+   "NOT"
+  ],
+  "dropped": [
+   "DO"
+  ]
+ },
+ "do not worry": {
+  "canonical": [
+   "WORRY",
+   "NOT"
+  ],
+  "dropped": [
+   "DO"
+  ]
+ },
+ "do you need something": {
+  "canonical": [
+   "YOU",
+   "SOMETHING",
+   "NEED"
+  ],
+  "dropped": [
+   "DO"
+  ]
+ },
+ "go and sleep": {
+  "canonical": [
+   "GO",
+   "SLEEP"
+  ],
+  "dropped": []
+ },
+ "had your food": {
+  "canonical": [
+   "YOUR",
+   "FOOD"
+  ],
+  "dropped": []
+ },
+ "he came by train": {
+  "canonical": [
+   "HE",
+   "CAME",
+   "TRAIN"
+  ],
+  "dropped": []
+ },
+ "he is on the way": {
+  "canonical": [
+   "HE",
+   "ON",
+   "WAY"
+  ],
+  "dropped": []
+ },
+ "he she is my friend": {
+  "canonical": [
+   "HE",
+   "SHE",
+   "MY",
+   "FRIEND"
+  ],
+  "dropped": []
+ },
+ "he would be coming today": {
+  "canonical": [
+   "TODAY",
+   "HE",
+   "COME"
+  ],
+  "dropped": []
+ },
+ "help me": {
+  "canonical": [
+   "ME",
+   "HELP"
+  ],
+  "dropped": []
+ },
+ "hi how are you": {
+  "canonical": [
+   "NAMASTE",
+   "YOU",
+   "HOW"
+  ],
+  "dropped": []
+ },
+ "how are things": {
+  "canonical": [
+   "THINGS",
+   "HOW"
+  ],
+  "dropped": []
+ },
+ "how can i help you": {
+  "canonical": [
+   "I",
+   "YOU",
+   "HELP",
+   "HOW"
+  ],
+  "dropped": []
+ },
+ "how can i trust you": {
+  "canonical": [
+   "I",
+   "YOU",
+   "TRUST",
+   "HOW"
+  ],
+  "dropped": []
+ },
+ "how dare you": {
+  "canonical": [
+   "YOU",
+   "DARE",
+   "HOW"
+  ],
+  "dropped": []
+ },
+ "how old are you": {
+  "canonical": [
+   "OLD",
+   "YOU",
+   "HOW"
+  ],
+  "dropped": []
+ },
+ "i am (age)": {
+  "canonical": [
+   "I",
+   "(AGE)"
+  ],
+  "dropped": []
+ },
+ "i am afraid of that": {
+  "canonical": [
+   "I",
+   "AFRAID"
+  ],
+  "dropped": [
+   "THAT"
+  ]
+ },
+ "i am crying": {
+  "canonical": [
+   "I",
+   "CRY"
+  ],
+  "dropped": []
+ },
+ "i am feeling bored": {
+  "canonical": [
+   "I",
+   "BORED",
+   "FEEL"
+  ],
+  "dropped": []
+ },
+ "i am feeling cold": {
+  "canonical": [
+   "I",
+   "COLD",
+   "FEEL"
+  ],
+  "dropped": []
+ },
+ "i am fine. thank you sir": {
+  "canonical": [
+   "I",
+   "FINE",
+   "THANK YOU",
+   "SIR"
+  ],
+  "dropped": []
+ },
+ "i am hungry": {
+  "canonical": [
+   "I",
+   "HUNGRY"
+  ],
+  "dropped": []
+ },
+ "i am in dilemma what to do": {
+  "canonical": [
+   "I",
+   "IN",
+   "DILEMMA",
+   "TO",
+   "DO",
+   "WHAT"
+  ],
+  "dropped": []
+ },
+ "i am not really sure": {
+  "canonical": [
+   "I",
+   "REALLY",
+   "SURE",
+   "NOT"
+  ],
+  "dropped": []
+ },
+ "i am really grateful": {
+  "canonical": [
+   "I",
+   "REALLY",
+   "GRATEFUL"
+  ],
+  "dropped": []
+ },
+ "i am sitting in the class": {
+  "canonical": [
+   "I",
+   "IN",
+   "CLASS",
+   "SIT"
+  ],
+  "dropped": [
+   "THE"
+  ]
+ },
+ "i am so sorry to hear that": {
+  "canonical": [
+   "I",
+   "SO",
+   "SORRY",
+   "TO",
+   "HEAR"
+  ],
+  "dropped": [
+   "AM",
+   "THAT"
+  ]
+ },
+ "i am suffering from fever": {
+  "canonical": [
+   "I",
+   "SUFFER",
+   "FROM",
+   "FEVER"
+  ],
+  "dropped": []
+ },
+ "i am tired": {
+  "canonical": [
+   "I",
+   "TIRED"
+  ],
+  "dropped": []
+ },
+ "i am very happy": {
+  "canonical": [
+   "I",
+   "VERY",
+   "HAPPY"
+  ],
+  "dropped": []
+ },
+ "i can not help you there": {
+  "canonical": [
+   "I",
+   "YOU",
+   "THERE",
+   "HELP",
+   "NOT"
+  ],
+  "dropped": []
+ },
+ "i do not agree": {
+  "canonical": [
+   "I",
+   "AGREE",
+   "NOT"
+  ],
+  "dropped": [
+   "DO"
+  ]
+ },
+ "i do not like it": {
+  "canonical": [
+   "I",
+   "IT",
+   "LIKE",
+   "NOT"
+  ],
+  "dropped": [
+   "DO"
+  ]
+ },
+ "i do not mean it": {
+  "canonical": [
+   "I",
+   "IT",
+   "MEAN",
+   "NOT"
+  ],
+  "dropped": [
+   "DO"
+  ]
+ },
+ "i dont agree": {
+  "canonical": [
+   "I",
+   "AGREE",
+   "NOT"
+  ],
+  "dropped": [
+   "DO"
+  ]
+ },
+ "i enjoyed a lot": {
+  "canonical": [
+   "I",
+   "LOT",
+   "ENJOY"
+  ],
+  "dropped": [
+   "A"
+  ]
+ },
+ "i got hurt": {
+  "canonical": [
+   "I",
+   "HAVE",
+   "HURT"
+  ],
+  "dropped": []
+ },
+ "i like you i love you": {
+  "canonical": [
+   "I",
+   "LIKE",
+   "YOU",
+   "I",
+   "LOVE",
+   "YOU"
+  ],
+  "dropped": []
+ },
+ "i need water": {
+  "canonical": [
+   "I",
+   "WATER",
+   "NEED"
+  ],
+  "dropped": []
+ },
+ "i promise": {
+  "canonical": [
+   "I",
+   "PROMISE"
+  ],
+  "dropped": []
+ },
+ "i really appreciate it": {
+  "canonical": [
+   "I",
+   "REALLY",
+   "IT",
+   "APPRECIATE"
+  ],
+  "dropped": []
+ },
+ "i somehow got to know about it": {
+  "canonical": [
+   "I",
+   "SOMEHOW",
+   "HAVE",
+   "ABOUT",
+   "IT",
+   "KNOW"
+  ],
+  "dropped": []
+ },
+ "i was stopped by some one": {
+  "canonical": [
+   "I",
+   "BY",
+   "SOMEONE",
+   "STOP"
+  ],
+  "dropped": []
+ },
+ "it does not make any difference to me": {
+  "canonical": [
+   "IT",
+   "ANY",
+   "DIFFERENCE",
+   "TO",
+   "ME",
+   "MAKE",
+   "NOT"
+  ],
+  "dropped": [
+   "DO"
+  ]
+ },
+ "it was nice chatting with you": {
+  "canonical": [
+   "IT",
+   "NICE",
+   "WITH",
+   "YOU",
+   "CHAT"
+  ],
+  "dropped": []
+ },
+ "let him take time": {
+  "canonical": [
+   "LET",
+   "HIM",
+   "TIME",
+   "TAKE"
+  ],
+  "dropped": []
+ },
+ "my name is xxxxxxxx": {
+  "canonical": [
+   "MY",
+   "NAME",
+   "XXXXXXXX"
+  ],
+  "dropped": []
+ },
+ "nice to meet you": {
+  "canonical": [
+   "NICE",
+   "YOU",
+   "MEET"
+  ],
+  "dropped": []
+ },
+ "now onwards he will never hurt you": {
+  "canonical": [
+   "NOW",
+   "ONWARDS",
+   "HE",
+   "YOU",
+   "HURT",
+   "NEVER"
+  ],
+  "dropped": []
+ },
+ "pour some more water into the glass": {
+  "canonical": [
+   "SOME",
+   "MORE",
+   "WATER",
+   "INTO",
+   "GLASS",
+   "POUR"
+  ],
+  "dropped": [
+   "THE"
+  ]
+ },
+ "prepare the bed": {
+  "canonical": [
+   "BED",
+   "PREPARE"
+  ],
+  "dropped": []
+ },
+ "serve the food": {
+  "canonical": [
+   "FOOD",
+   "SERVE"
+  ],
+  "dropped": []
+ },
+ "shall we go outside": {
+  "canonical": [
+   "WE",
+   "OUTSIDE",
+   "GO"
+  ],
+  "dropped": []
+ },
+ "speak softly": {
+  "canonical": [
+   "SOFTLY",
+   "SPEAK"
+  ],
+  "dropped": []
+ },
+ "take care of yourself": {
+  "canonical": [
+   "TAKE",
+   "CARE",
+   "YOU"
+  ],
+  "dropped": [
+   "OF"
+  ]
+ },
+ "tell me truth": {
+  "canonical": [
+   "ME",
+   "TRUTH",
+   "TELL"
+  ],
+  "dropped": []
+ },
+ "thank you so much": {
+  "canonical": [
+   "THANK YOU",
+   "SO",
+   "MUCH"
+  ],
+  "dropped": []
+ },
+ "that is so kind of you": {
+  "canonical": [
+   "KIND",
+   "YOU"
+  ],
+  "dropped": [
+   "THAT"
+  ]
+ },
+ "try to understand": {
+  "canonical": [
+   "TRY",
+   "TO",
+   "UNDERSTAND"
+  ],
+  "dropped": []
+ },
+ "turn on light turn off light": {
+  "canonical": [
+   "TURN",
+   "ON",
+   "LIGHT",
+   "TURN",
+   "OFF",
+   "LIGHT"
+  ],
+  "dropped": []
+ },
+ "we are all with you": {
+  "canonical": [
+   "WE",
+   "ALL",
+   "WITH",
+   "YOU"
+  ],
+  "dropped": []
+ },
+ "wear the shirt": {
+  "canonical": [
+   "SHIRT",
+   "WEAR"
+  ],
+  "dropped": []
+ },
+ "what are you doing": {
+  "canonical": [
+   "YOU",
+   "DO",
+   "WHAT"
+  ],
+  "dropped": []
+ },
+ "what did you tell him": {
+  "canonical": [
+   "YOU",
+   "HIM",
+   "TELL",
+   "WHAT"
+  ],
+  "dropped": []
+ },
+ "what do you do": {
+  "canonical": [
+   "YOU",
+   "DO",
+   "WHAT"
+  ],
+  "dropped": []
+ },
+ "what do you think": {
+  "canonical": [
+   "YOU",
+   "THINK",
+   "WHAT"
+  ],
+  "dropped": [
+   "DO"
+  ]
+ },
+ "what do you want to become": {
+  "canonical": [
+   "YOU",
+   "WANT",
+   "BECOME",
+   "WHAT"
+  ],
+  "dropped": [
+   "DO"
+  ]
+ },
+ "what happened": {
+  "canonical": [
+   "HAPPEN",
+   "WHAT"
+  ],
+  "dropped": []
+ },
+ "what have you planned for your career": {
+  "canonical": [
+   "HAVE",
+   "YOU",
+   "YOUR",
+   "CAREER",
+   "PLAN",
+   "WHAT"
+  ],
+  "dropped": []
+ },
+ "what is your phone number": {
+  "canonical": [
+   "YOUR",
+   "PHONE",
+   "NUMBER",
+   "WHAT"
+  ],
+  "dropped": []
+ },
+ "what you want": {
+  "canonical": [
+   "YOU",
+   "WANT",
+   "WHAT"
+  ],
+  "dropped": []
+ },
+ "when will the train leave": {
+  "canonical": [
+   "TRAIN",
+   "LEAVE",
+   "WHEN"
+  ],
+  "dropped": []
+ },
+ "where are you from": {
+  "canonical": [
+   "YOU",
+   "FROM",
+   "WHERE"
+  ],
+  "dropped": []
+ },
+ "which college school are you from": {
+  "canonical": [
+   "COLLEGE",
+   "SCHOOL",
+   "YOU",
+   "FROM",
+   "WHICH"
+  ],
+  "dropped": []
+ },
+ "who are you": {
+  "canonical": [
+   "YOU",
+   "WHO"
+  ],
+  "dropped": []
+ },
+ "why are you angry": {
+  "canonical": [
+   "YOU",
+   "ANGRY",
+   "WHY"
+  ],
+  "dropped": []
+ },
+ "why are you crying": {
+  "canonical": [
+   "YOU",
+   "CRY",
+   "WHY"
+  ],
+  "dropped": []
+ },
+ "why are you disappointed": {
+  "canonical": [
+   "YOU",
+   "DISAPPOINTED",
+   "WHY"
+  ],
+  "dropped": []
+ },
+ "you are bad": {
+  "canonical": [
+   "YOU",
+   "BAD"
+  ],
+  "dropped": []
+ },
+ "you are good": {
+  "canonical": [
+   "YOU",
+   "GOOD"
+  ],
+  "dropped": []
+ },
+ "you are welcome": {
+  "canonical": [
+   "YOU",
+   "WELCOME"
+  ],
+  "dropped": []
+ },
+ "you can do it": {
+  "canonical": [
+   "YOU",
+   "IT",
+   "DO"
+  ],
+  "dropped": []
+ },
+ "you do anything, i do not care": {
+  "canonical": [
+   "YOU",
+   "ANYTHING",
+   "I",
+   "CARE",
+   "NOT"
+  ],
+  "dropped": [
+   "DO",
+   "DO"
+  ]
+ },
+ "you need a medicine, take this one": {
+  "canonical": [
+   "YOU",
+   "NEED",
+   "MEDICINE",
+   "TAKE",
+   "THIS",
+   "ONE"
+  ],
+  "dropped": [
+   "A"
+  ]
+ }
+}

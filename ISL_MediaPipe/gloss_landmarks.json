@@ -1,0 +1,1330 @@
+{
+  "namaste": {
+    "status": "ready",
+    "file": "gloss_namaste.json",
+    "uid": "oK0JcoPqnuY",
+    "frame_count": 35,
+    "hands_frames": 35,
+    "detection_rate": 1.0
+  },
+  "i": {
+    "status": "ready",
+    "file": "gloss_i.json",
+    "uid": "P-k3HOBisv8_1",
+    "frame_count": 28,
+    "hands_frames": 28,
+    "detection_rate": 1.0
+  },
+  "go": {
+    "status": "ready",
+    "file": "gloss_go.json",
+    "uid": "PQoocuBF2f8_1",
+    "frame_count": 32,
+    "hands_frames": 32,
+    "detection_rate": 1.0
+  },
+  "to": {
+    "status": "ready",
+    "file": "gloss_to.json",
+    "uid": "pXODwFAlZUg_1",
+    "frame_count": 26,
+    "hands_frames": 26,
+    "detection_rate": 1.0
+  },
+  "school": {
+    "status": "ready",
+    "file": "gloss_school.json",
+    "uid": "T3DNMjNynU0_1",
+    "frame_count": 75,
+    "hands_frames": 46,
+    "detection_rate": 0.6133
+  },
+  "about": {
+    "status": "ready",
+    "file": "gloss_about.json",
+    "uid": "nbGetUh9P74_1",
+    "frame_count": 31,
+    "hands_frames": 31,
+    "detection_rate": 1.0
+  },
+  "age": {
+    "status": "ready",
+    "file": "gloss_age.json",
+    "uid": "98wq5RZYq90_1",
+    "frame_count": 82,
+    "hands_frames": 76,
+    "detection_rate": 0.9268
+  },
+  "agree": {
+    "status": "ready",
+    "file": "gloss_agree.json",
+    "uid": "cdg2loc35vs",
+    "frame_count": 66,
+    "hands_frames": 66,
+    "detection_rate": 1.0
+  },
+  "all": {
+    "status": "ready",
+    "file": "gloss_all.json",
+    "uid": "by5LPvJU5OY_1",
+    "frame_count": 37,
+    "hands_frames": 37,
+    "detection_rate": 1.0
+  },
+  "angry": {
+    "status": "ready",
+    "file": "gloss_angry.json",
+    "uid": "9e62cz2TIdo_1",
+    "frame_count": 42,
+    "hands_frames": 42,
+    "detection_rate": 1.0
+  },
+  "any": {
+    "status": "ready",
+    "file": "gloss_any.json",
+    "uid": "vXg5mjo2Lpc",
+    "frame_count": 47,
+    "hands_frames": 46,
+    "detection_rate": 0.9787
+  },
+  "ask": {
+    "status": "ready",
+    "file": "gloss_ask.json",
+    "uid": "r8ySf1Ql93Q_1",
+    "frame_count": 37,
+    "hands_frames": 37,
+    "detection_rate": 1.0
+  },
+  "baby": {
+    "status": "ready",
+    "file": "gloss_baby.json",
+    "uid": "H5ta0C2Sz2I",
+    "frame_count": 193,
+    "hands_frames": 133,
+    "detection_rate": 0.6891
+  },
+  "bad": {
+    "status": "ready",
+    "file": "gloss_bad.json",
+    "uid": "l8lwU4wIOz4",
+    "frame_count": 28,
+    "hands_frames": 28,
+    "detection_rate": 1.0
+  },
+  "beautiful": {
+    "status": "ready",
+    "file": "gloss_beautiful.json",
+    "uid": "pxP6gH5pazw",
+    "frame_count": 52,
+    "hands_frames": 52,
+    "detection_rate": 1.0
+  },
+  "become": {
+    "status": "ready",
+    "file": "gloss_become.json",
+    "uid": "oLG6MTeNo2k_1",
+    "frame_count": 23,
+    "hands_frames": 16,
+    "detection_rate": 0.6957
+  },
+  "bed": {
+    "status": "ready",
+    "file": "gloss_bed.json",
+    "uid": "iXunNKio1wU_1",
+    "frame_count": 62,
+    "hands_frames": 62,
+    "detection_rate": 1.0
+  },
+  "big": {
+    "status": "ready",
+    "file": "gloss_big.json",
+    "uid": "a2YWHdD5gKk_1",
+    "frame_count": 36,
+    "hands_frames": 36,
+    "detection_rate": 1.0
+  },
+  "bored": {
+    "status": "ready",
+    "file": "gloss_bored.json",
+    "uid": "R-IpftpYr2g",
+    "frame_count": 41,
+    "hands_frames": 35,
+    "detection_rate": 0.8537
+  },
+  "boy": {
+    "status": "ready",
+    "file": "gloss_boy.json",
+    "uid": "Yiu0Yd9fSk8_1",
+    "frame_count": 80,
+    "hands_frames": 80,
+    "detection_rate": 1.0
+  },
+  "bread": {
+    "status": "ready",
+    "file": "gloss_bread.json",
+    "uid": "MNCeezFR_YI",
+    "frame_count": 46,
+    "hands_frames": 46,
+    "detection_rate": 1.0
+  },
+  "bring": {
+    "status": "ready",
+    "file": "gloss_bring.json",
+    "uid": "JsdNgRcC4wU_1",
+    "frame_count": 31,
+    "hands_frames": 31,
+    "detection_rate": 1.0
+  },
+  "brother": {
+    "status": "ready",
+    "file": "gloss_brother.json",
+    "uid": "rOcFkQzLhLQ_1",
+    "frame_count": 124,
+    "hands_frames": 124,
+    "detection_rate": 1.0
+  },
+  "bus": {
+    "status": "ready",
+    "file": "gloss_bus.json",
+    "uid": "HufgJPpb1kQ",
+    "frame_count": 51,
+    "hands_frames": 51,
+    "detection_rate": 1.0
+  },
+  "chat": {
+    "status": "ready",
+    "file": "gloss_chat.json",
+    "uid": "SccmMdkBiAU_1",
+    "frame_count": 92,
+    "hands_frames": 82,
+    "detection_rate": 0.8913
+  },
+  "child": {
+    "status": "ready",
+    "file": "gloss_child.json",
+    "uid": "vLbvf0zEj5M",
+    "frame_count": 181,
+    "hands_frames": 181,
+    "detection_rate": 1.0
+  },
+  "cold": {
+    "status": "ready",
+    "file": "gloss_cold.json",
+    "uid": "EdGBkBi0xQ4",
+    "frame_count": 34,
+    "hands_frames": 34,
+    "detection_rate": 1.0
+  },
+  "college": {
+    "status": "ready",
+    "file": "gloss_college.json",
+    "uid": "Vxw3BnPmi3s_1",
+    "frame_count": 39,
+    "hands_frames": 39,
+    "detection_rate": 1.0
+  },
+  "comb": {
+    "status": "ready",
+    "file": "gloss_comb.json",
+    "uid": "rbw7n0D0KGE_1",
+    "frame_count": 83,
+    "hands_frames": 83,
+    "detection_rate": 1.0
+  },
+  "come": {
+    "status": "ready",
+    "file": "gloss_come.json",
+    "uid": "d3i2EjGoA2k_1",
+    "frame_count": 31,
+    "hands_frames": 31,
+    "detection_rate": 1.0
+  },
+  "cry": {
+    "status": "ready",
+    "file": "gloss_cry.json",
+    "uid": "-oy6L89CeWU_1",
+    "frame_count": 47,
+    "hands_frames": 47,
+    "detection_rate": 1.0
+  },
+  "day": {
+    "status": "ready",
+    "file": "gloss_day.json",
+    "uid": "v_HmgeH-ABo",
+    "frame_count": 37,
+    "hands_frames": 37,
+    "detection_rate": 1.0
+  },
+  "delhi": {
+    "status": "ready",
+    "file": "gloss_delhi.json",
+    "uid": "2e5SUxTjVvI",
+    "frame_count": 31,
+    "hands_frames": 31,
+    "detection_rate": 1.0
+  },
+  "difference": {
+    "status": "ready",
+    "file": "gloss_difference.json",
+    "uid": "08E4Dr0zyKk_2",
+    "frame_count": 69,
+    "hands_frames": 54,
+    "detection_rate": 0.7826
+  },
+  "do": {
+    "status": "ready",
+    "file": "gloss_do.json",
+    "uid": "52a1sCV-74w_1",
+    "frame_count": 25,
+    "hands_frames": 24,
+    "detection_rate": 0.96
+  },
+  "doctor": {
+    "status": "ready",
+    "file": "gloss_doctor.json",
+    "uid": "-5lgXJQG0EM_1",
+    "frame_count": 39,
+    "hands_frames": 39,
+    "detection_rate": 1.0
+  },
+  "doe": {
+    "status": "ready",
+    "file": "gloss_doe.json",
+    "uid": "6N1X5V0C5d8",
+    "frame_count": 158,
+    "hands_frames": 157,
+    "detection_rate": 0.9937
+  },
+  "drink": {
+    "status": "ready",
+    "file": "gloss_drink.json",
+    "uid": "6X8mSzwuKWw_1",
+    "frame_count": 30,
+    "hands_frames": 28,
+    "detection_rate": 0.9333
+  },
+  "eat": {
+    "status": "ready",
+    "file": "gloss_eat.json",
+    "uid": "IYf_zhHRbWw_1",
+    "frame_count": 57,
+    "hands_frames": 57,
+    "detection_rate": 1.0
+  },
+  "family": {
+    "status": "ready",
+    "file": "gloss_family.json",
+    "uid": "j1LtQ6CcA_4_1",
+    "frame_count": 126,
+    "hands_frames": 79,
+    "detection_rate": 0.627
+  },
+  "father": {
+    "status": "ready",
+    "file": "gloss_father.json",
+    "uid": "z2ETf2ExVsU_1",
+    "frame_count": 126,
+    "hands_frames": 84,
+    "detection_rate": 0.6667
+  },
+  "fever": {
+    "status": "ready",
+    "file": "gloss_fever.json",
+    "uid": "xQIXN-eQZ7I",
+    "frame_count": 56,
+    "hands_frames": 56,
+    "detection_rate": 1.0
+  },
+  "fine": {
+    "status": "ready",
+    "file": "gloss_fine.json",
+    "uid": "23kjqyecBwE",
+    "frame_count": 60,
+    "hands_frames": 60,
+    "detection_rate": 1.0
+  },
+  "food": {
+    "status": "ready",
+    "file": "gloss_food.json",
+    "uid": "IVY4EYIVHMI",
+    "frame_count": 38,
+    "hands_frames": 38,
+    "detection_rate": 1.0
+  },
+  "free": {
+    "status": "ready",
+    "file": "gloss_free.json",
+    "uid": "UMS2IJZt6To",
+    "frame_count": 58,
+    "hands_frames": 58,
+    "detection_rate": 1.0
+  },
+  "friend": {
+    "status": "ready",
+    "file": "gloss_friend.json",
+    "uid": "ElXP4DjT3H8_1",
+    "frame_count": 86,
+    "hands_frames": 86,
+    "detection_rate": 1.0
+  },
+  "from": {
+    "status": "ready",
+    "file": "gloss_from.json",
+    "uid": "UfYeaYNJV8E_1",
+    "frame_count": 26,
+    "hands_frames": 25,
+    "detection_rate": 0.9615
+  },
+  "get": {
+    "status": "ready",
+    "file": "gloss_get.json",
+    "uid": "E8uf2VM3KCo",
+    "frame_count": 35,
+    "hands_frames": 35,
+    "detection_rate": 1.0
+  },
+  "girl": {
+    "status": "ready",
+    "file": "gloss_girl.json",
+    "uid": "gz02l8wMzKk_1",
+    "frame_count": 82,
+    "hands_frames": 81,
+    "detection_rate": 0.9878
+  },
+  "give": {
+    "status": "ready",
+    "file": "gloss_give.json",
+    "uid": "Codai31kUpE_1",
+    "frame_count": 23,
+    "hands_frames": 16,
+    "detection_rate": 0.6957
+  },
+  "glass": {
+    "status": "ready",
+    "file": "gloss_glass.json"
+  },
+  "good": {
+    "status": "ready",
+    "file": "gloss_good.json"
+  },
+  "hair": {
+    "status": "ready",
+    "file": "gloss_hair.json"
+  },
+  "happy": {
+    "status": "ready",
+    "file": "gloss_happy.json"
+  },
+  "have": {
+    "status": "ready",
+    "file": "gloss_have.json"
+  },
+  "he": {
+    "status": "ready",
+    "file": "gloss_he.json"
+  },
+  "health": {
+    "status": "ready",
+    "file": "gloss_health.json"
+  },
+  "hear": {
+    "status": "ready",
+    "file": "gloss_hear.json"
+  },
+  "heart": {
+    "status": "ready",
+    "file": "gloss_heart.json"
+  },
+  "help": {
+    "status": "ready",
+    "file": "gloss_help.json"
+  },
+  "her": {
+    "status": "ready",
+    "file": "gloss_her.json"
+  },
+  "hide": {
+    "status": "ready",
+    "file": "gloss_hide.json"
+  },
+  "him": {
+    "status": "ready",
+    "file": "gloss_him.json"
+  },
+  "home": {
+    "status": "ready",
+    "file": "gloss_home.json"
+  },
+  "hospital": {
+    "status": "ready",
+    "file": "gloss_hospital.json"
+  },
+  "hot": {
+    "status": "ready",
+    "file": "gloss_hot.json"
+  },
+  "house": {
+    "status": "ready",
+    "file": "gloss_house.json"
+  },
+  "how": {
+    "status": "ready",
+    "file": "gloss_how.json"
+  },
+  "hungry": {
+    "status": "ready",
+    "file": "gloss_hungry.json"
+  },
+  "hurt": {
+    "status": "ready",
+    "file": "gloss_hurt.json"
+  },
+  "in": {
+    "status": "ready",
+    "file": "gloss_in.json"
+  },
+  "india": {
+    "status": "ready",
+    "file": "gloss_india.json"
+  },
+  "it": {
+    "status": "ready",
+    "file": "gloss_it.json"
+  },
+  "kind": {
+    "status": "ready",
+    "file": "gloss_kind.json"
+  },
+  "know": {
+    "status": "ready",
+    "file": "gloss_know.json"
+  },
+  "leave": {
+    "status": "ready",
+    "file": "gloss_leave.json"
+  },
+  "light": {
+    "status": "ready",
+    "file": "gloss_light.json"
+  },
+  "like": {
+    "status": "ready",
+    "file": "gloss_like.json"
+  },
+  "love": {
+    "status": "ready",
+    "file": "gloss_love.json"
+  },
+  "make": {
+    "status": "ready",
+    "file": "gloss_make.json"
+  },
+  "man": {
+    "status": "ready",
+    "file": "gloss_man.json"
+  },
+  "market": {
+    "status": "ready",
+    "file": "gloss_market.json"
+  },
+  "me": {
+    "status": "ready",
+    "file": "gloss_me.json"
+  },
+  "mean": {
+    "status": "ready",
+    "file": "gloss_mean.json"
+  },
+  "medicine": {
+    "status": "ready",
+    "file": "gloss_medicine.json"
+  },
+  "meet": {
+    "status": "ready",
+    "file": "gloss_meet.json"
+  },
+  "money": {
+    "status": "ready",
+    "file": "gloss_money.json",
+    "uid": "NZwNyVXvpTo_1",
+    "frame_count": 21,
+    "hands_frames": 21,
+    "detection_rate": 1.0
+  },
+  "more": {
+    "status": "ready",
+    "file": "gloss_more.json",
+    "uid": "lWnmHMNS06E",
+    "frame_count": 52,
+    "hands_frames": 52,
+    "detection_rate": 1.0
+  },
+  "morning": {
+    "status": "ready",
+    "file": "gloss_morning.json",
+    "uid": "e0d5YxnIU3Y_1",
+    "frame_count": 48,
+    "hands_frames": 48,
+    "detection_rate": 1.0
+  },
+  "mother": {
+    "status": "ready",
+    "file": "gloss_mother.json",
+    "uid": "YwR00ZeFcQY_1",
+    "frame_count": 63,
+    "hands_frames": 63,
+    "detection_rate": 1.0
+  },
+  "my": {
+    "status": "ready",
+    "file": "gloss_my.json",
+    "uid": "Kb_ozOWxAfQ_1",
+    "frame_count": 31,
+    "hands_frames": 31,
+    "detection_rate": 1.0
+  },
+  "name": {
+    "status": "ready",
+    "file": "gloss_name.json",
+    "uid": "3I1fwIgGXv8",
+    "frame_count": 35,
+    "hands_frames": 35,
+    "detection_rate": 1.0
+  },
+  "need": {
+    "status": "ready",
+    "file": "gloss_need.json",
+    "uid": "Z1rwaj311WE_1",
+    "frame_count": 41,
+    "hands_frames": 40,
+    "detection_rate": 0.9756
+  },
+  "never": {
+    "status": "ready",
+    "file": "gloss_never.json",
+    "uid": "MYVwYIX47wQ",
+    "frame_count": 56,
+    "hands_frames": 56,
+    "detection_rate": 1.0
+  },
+  "new": {
+    "status": "ready",
+    "file": "gloss_new.json",
+    "uid": "l4jwOKcXm4I",
+    "frame_count": 54,
+    "hands_frames": 52,
+    "detection_rate": 0.963
+  },
+  "nice": {
+    "status": "ready",
+    "file": "gloss_nice.json",
+    "uid": "QyL43-YjgK8",
+    "frame_count": 54,
+    "hands_frames": 54,
+    "detection_rate": 1.0
+  },
+  "night": {
+    "status": "ready",
+    "file": "gloss_night.json",
+    "uid": "0vx6xWIEP_0_1",
+    "frame_count": 45,
+    "hands_frames": 44,
+    "detection_rate": 0.9778
+  },
+  "no": {
+    "status": "ready",
+    "file": "gloss_no.json",
+    "uid": "VS_ZuiQIJx0",
+    "frame_count": 45,
+    "hands_frames": 45,
+    "detection_rate": 1.0
+  },
+  "not": {
+    "status": "ready",
+    "file": "gloss_not.json",
+    "uid": "BEEOC2ZXhsg",
+    "frame_count": 47,
+    "hands_frames": 47,
+    "detection_rate": 1.0
+  },
+  "now": {
+    "status": "ready",
+    "file": "gloss_now.json",
+    "uid": "phWVA0eK_x8_1",
+    "frame_count": 17,
+    "hands_frames": 17,
+    "detection_rate": 1.0
+  },
+  "of": {
+    "status": "ready",
+    "file": "gloss_of.json",
+    "uid": "Y1KyjzkkP4E_1",
+    "frame_count": 26,
+    "hands_frames": 26,
+    "detection_rate": 1.0
+  },
+  "office": {
+    "status": "ready",
+    "file": "gloss_office.json",
+    "uid": "3kNaobravCU",
+    "frame_count": 33,
+    "hands_frames": 33,
+    "detection_rate": 1.0
+  },
+  "old": {
+    "status": "ready",
+    "file": "gloss_old.json",
+    "uid": "z-gika19BqU",
+    "frame_count": 46,
+    "hands_frames": 46,
+    "detection_rate": 1.0
+  },
+  "on": {
+    "status": "ready",
+    "file": "gloss_on.json",
+    "uid": "Gh-mMyOy1UY",
+    "frame_count": 36,
+    "hands_frames": 36,
+    "detection_rate": 1.0
+  },
+  "one": {
+    "status": "ready",
+    "file": "gloss_one.json",
+    "uid": "lH6pT7nQb9A",
+    "frame_count": 25,
+    "hands_frames": 25,
+    "detection_rate": 1.0
+  },
+  "our": {
+    "status": "ready",
+    "file": "gloss_our.json",
+    "uid": "MJTOje2ViH4",
+    "frame_count": 41,
+    "hands_frames": 41,
+    "detection_rate": 1.0
+  },
+  "outside": {
+    "status": "ready",
+    "file": "gloss_outside.json",
+    "uid": "KNZbdGWxDfw",
+    "frame_count": 35,
+    "hands_frames": 33,
+    "detection_rate": 0.9429
+  },
+  "phone": {
+    "status": "ready",
+    "file": "gloss_phone.json",
+    "uid": "YhHAI3h-Pno",
+    "frame_count": 38,
+    "hands_frames": 38,
+    "detection_rate": 1.0
+  },
+  "place": {
+    "status": "ready",
+    "file": "gloss_place.json",
+    "uid": "xBLGhif1BWI",
+    "frame_count": 55,
+    "hands_frames": 55,
+    "detection_rate": 1.0
+  },
+  "plan": {
+    "status": "ready",
+    "file": "gloss_plan.json",
+    "uid": "bGzdNLa1O9o",
+    "frame_count": 76,
+    "hands_frames": 76,
+    "detection_rate": 1.0
+  },
+  "play": {
+    "status": "ready",
+    "file": "gloss_play.json",
+    "uid": "5jDsH5VpFBo",
+    "frame_count": 56,
+    "hands_frames": 56,
+    "detection_rate": 1.0
+  },
+  "please": {
+    "status": "ready",
+    "file": "gloss_please.json",
+    "uid": "vAW9QDnXLrE",
+    "frame_count": 44,
+    "hands_frames": 42,
+    "detection_rate": 0.9545
+  },
+  "pour": {
+    "status": "ready",
+    "file": "gloss_pour.json",
+    "uid": "r4sVEIO1jZE_1",
+    "frame_count": 26,
+    "hands_frames": 26,
+    "detection_rate": 1.0
+  },
+  "promise": {
+    "status": "ready",
+    "file": "gloss_promise.json",
+    "uid": "aJvkIV-8Q9A",
+    "frame_count": 44,
+    "hands_frames": 44,
+    "detection_rate": 1.0
+  },
+  "read": {
+    "status": "ready",
+    "file": "gloss_read.json",
+    "uid": "OWya5pey33I",
+    "frame_count": 43,
+    "hands_frames": 43,
+    "detection_rate": 1.0
+  },
+  "repeat": {
+    "status": "ready",
+    "file": "gloss_repeat.json",
+    "uid": "HNF-z7j8p0A",
+    "frame_count": 45,
+    "hands_frames": 45,
+    "detection_rate": 1.0
+  },
+  "rice": {
+    "status": "ready",
+    "file": "gloss_rice.json",
+    "uid": "8tgBgXrOn6Y_1",
+    "frame_count": 27,
+    "hands_frames": 27,
+    "detection_rate": 1.0
+  },
+  "room": {
+    "status": "ready",
+    "file": "gloss_room.json",
+    "uid": "hHLoe4rXNNk_1",
+    "frame_count": 81,
+    "hands_frames": 79,
+    "detection_rate": 0.9753
+  },
+  "sad": {
+    "status": "ready",
+    "file": "gloss_sad.json",
+    "uid": "P3LobzeDo9E_1",
+    "frame_count": 52,
+    "hands_frames": 52,
+    "detection_rate": 1.0
+  },
+  "see": {
+    "status": "ready",
+    "file": "gloss_see.json",
+    "uid": "WlhFpHM7lYY",
+    "frame_count": 56,
+    "hands_frames": 56,
+    "detection_rate": 1.0
+  },
+  "serve": {
+    "status": "ready",
+    "file": "gloss_serve.json",
+    "uid": "_gSbFjpWY5c_1",
+    "frame_count": 29,
+    "hands_frames": 28,
+    "detection_rate": 0.9655
+  },
+  "she": {
+    "status": "ready",
+    "file": "gloss_she.json",
+    "uid": "_rEVVtT1I44",
+    "frame_count": 36,
+    "hands_frames": 36,
+    "detection_rate": 1.0
+  },
+  "shirt": {
+    "status": "ready",
+    "file": "gloss_shirt.json",
+    "uid": "EYhsfoO3_ME_1",
+    "frame_count": 42,
+    "hands_frames": 42,
+    "detection_rate": 1.0
+  },
+  "shop": {
+    "status": "ready",
+    "file": "gloss_shop.json",
+    "uid": "iwNBFzTrAjk",
+    "frame_count": 43,
+    "hands_frames": 40,
+    "detection_rate": 0.9302
+  },
+  "sister": {
+    "status": "ready",
+    "file": "gloss_sister.json",
+    "uid": "jWWLAybE8C8_1",
+    "frame_count": 115,
+    "hands_frames": 115,
+    "detection_rate": 1.0
+  },
+  "sleep": {
+    "status": "ready",
+    "file": "gloss_sleep.json",
+    "uid": "e4lux9dnPcw_1",
+    "frame_count": 60,
+    "hands_frames": 60,
+    "detection_rate": 1.0
+  },
+  "slower": {
+    "status": "ready",
+    "file": "gloss_slower.json",
+    "uid": "6jQ0I8KDlHg_2",
+    "frame_count": 78,
+    "hands_frames": 78,
+    "detection_rate": 1.0
+  },
+  "small": {
+    "status": "ready",
+    "file": "gloss_small.json",
+    "uid": "k0pUR0HlaNw",
+    "frame_count": 35,
+    "hands_frames": 35,
+    "detection_rate": 1.0
+  },
+  "some": {
+    "status": "ready",
+    "file": "gloss_some.json",
+    "uid": "_NQG94L6Ook",
+    "frame_count": 41,
+    "hands_frames": 41,
+    "detection_rate": 1.0
+  },
+  "something": {
+    "status": "ready",
+    "file": "gloss_something.json",
+    "uid": "gR1Kd5i82-0",
+    "frame_count": 37,
+    "hands_frames": 36,
+    "detection_rate": 0.973
+  },
+  "sorry": {
+    "status": "ready",
+    "file": "gloss_sorry.json",
+    "uid": "KXnSguJGdN8",
+    "frame_count": 50,
+    "hands_frames": 50,
+    "detection_rate": 1.0
+  },
+  "speak": {
+    "status": "ready",
+    "file": "gloss_speak.json",
+    "uid": "Yipdqci-cG4",
+    "frame_count": 35,
+    "hands_frames": 35,
+    "detection_rate": 1.0
+  },
+  "stubborn": {
+    "status": "ready",
+    "file": "gloss_stubborn.json",
+    "uid": "yYJBee_uP-A_1",
+    "frame_count": 36,
+    "hands_frames": 36,
+    "detection_rate": 1.0
+  },
+  "take": {
+    "status": "ready",
+    "file": "gloss_take.json",
+    "uid": "Cw13fIyVSNA",
+    "frame_count": 35,
+    "hands_frames": 35,
+    "detection_rate": 1.0
+  },
+  "talk": {
+    "status": "ready",
+    "file": "gloss_talk.json",
+    "uid": "qXPZr651bTY_1",
+    "frame_count": 121,
+    "hands_frames": 121,
+    "detection_rate": 1.0
+  },
+  "tell": {
+    "status": "ready",
+    "file": "gloss_tell.json",
+    "uid": "3kbyPG13anw_1",
+    "frame_count": 58,
+    "hands_frames": 58,
+    "detection_rate": 1.0
+  },
+  "thank you": {
+    "status": "ready",
+    "file": "gloss_thank_you.json",
+    "uid": "-4MbWP5T-cU",
+    "frame_count": 31,
+    "hands_frames": 31,
+    "detection_rate": 1.0
+  },
+  "that": {
+    "status": "ready",
+    "file": "gloss_that.json",
+    "uid": "AEfFAtmkt6o",
+    "frame_count": 39,
+    "hands_frames": 32,
+    "detection_rate": 0.8205
+  },
+  "their": {
+    "status": "ready",
+    "file": "gloss_their.json",
+    "uid": "qtblK4nxVok_1",
+    "frame_count": 27,
+    "hands_frames": 27,
+    "detection_rate": 1.0
+  },
+  "them": {
+    "status": "ready",
+    "file": "gloss_them.json",
+    "uid": "pxlwsuM4GeY_1",
+    "frame_count": 21,
+    "hands_frames": 21,
+    "detection_rate": 1.0
+  },
+  "there": {
+    "status": "ready",
+    "file": "gloss_there.json",
+    "uid": "ZIKWlQUff9c",
+    "frame_count": 26,
+    "hands_frames": 26,
+    "detection_rate": 1.0
+  },
+  "they": {
+    "status": "ready",
+    "file": "gloss_they.json",
+    "uid": "7qLPwuH3tVw",
+    "frame_count": 30,
+    "hands_frames": 30,
+    "detection_rate": 1.0
+  },
+  "things": {
+    "status": "ready",
+    "file": "gloss_things.json",
+    "uid": "Ld5T9glcT2k_1",
+    "frame_count": 50,
+    "hands_frames": 50,
+    "detection_rate": 1.0
+  },
+  "think": {
+    "status": "ready",
+    "file": "gloss_think.json",
+    "uid": "-Em79Yvwac4_1",
+    "frame_count": 56,
+    "hands_frames": 53,
+    "detection_rate": 0.9464
+  },
+  "this": {
+    "status": "ready",
+    "file": "gloss_this.json",
+    "uid": "hnIlCRz665c",
+    "frame_count": 24,
+    "hands_frames": 23,
+    "detection_rate": 0.9583
+  },
+  "time": {
+    "status": "ready",
+    "file": "gloss_time.json",
+    "uid": "4K-4FU5l7cY_1",
+    "frame_count": 66,
+    "hands_frames": 55,
+    "detection_rate": 0.8333
+  },
+  "tired": {
+    "status": "ready",
+    "file": "gloss_tired.json",
+    "uid": "r9DiSHym81k",
+    "frame_count": 37,
+    "hands_frames": 36,
+    "detection_rate": 0.973
+  },
+  "today": {
+    "status": "ready",
+    "file": "gloss_today.json",
+    "uid": "Iji2l3tYxHc",
+    "frame_count": 33,
+    "hands_frames": 33,
+    "detection_rate": 1.0
+  },
+  "tomorrow": {
+    "status": "ready",
+    "file": "gloss_tomorrow.json",
+    "uid": "TMANBpLx6s0_1",
+    "frame_count": 40,
+    "hands_frames": 40,
+    "detection_rate": 1.0
+  },
+  "train": {
+    "status": "ready",
+    "file": "gloss_train.json",
+    "uid": "wDy5hBdrwoc",
+    "frame_count": 42,
+    "hands_frames": 40,
+    "detection_rate": 0.9524
+  },
+  "trust": {
+    "status": "ready",
+    "file": "gloss_trust.json",
+    "uid": "LSrto7ULuac",
+    "frame_count": 32,
+    "hands_frames": 32,
+    "detection_rate": 1.0
+  },
+  "try": {
+    "status": "ready",
+    "file": "gloss_try.json",
+    "uid": "PqOEUuH2gj4",
+    "frame_count": 41,
+    "hands_frames": 40,
+    "detection_rate": 0.9756
+  },
+  "turn": {
+    "status": "ready",
+    "file": "gloss_turn.json",
+    "uid": "xMaMOHTmML4",
+    "frame_count": 48,
+    "hands_frames": 47,
+    "detection_rate": 0.9792
+  },
+  "understand": {
+    "status": "ready",
+    "file": "gloss_understand.json",
+    "uid": "dPSB-HxRET4",
+    "frame_count": 32,
+    "hands_frames": 29,
+    "detection_rate": 0.9062
+  },
+  "us": {
+    "status": "ready",
+    "file": "gloss_us.json",
+    "uid": "My4hzshl_RY_1",
+    "frame_count": 26,
+    "hands_frames": 26,
+    "detection_rate": 1.0
+  },
+  "very": {
+    "status": "ready",
+    "file": "gloss_very.json",
+    "uid": "nweVa6JYyYw",
+    "frame_count": 26,
+    "hands_frames": 25,
+    "detection_rate": 0.9615
+  },
+  "want": {
+    "status": "ready",
+    "file": "gloss_want.json",
+    "uid": "FmDMlXXPl9c_1",
+    "frame_count": 35,
+    "hands_frames": 35,
+    "detection_rate": 1.0
+  },
+  "water": {
+    "status": "ready",
+    "file": "gloss_water.json",
+    "uid": "SlORjr0kUM4",
+    "frame_count": 31,
+    "hands_frames": 31,
+    "detection_rate": 1.0
+  },
+  "way": {
+    "status": "ready",
+    "file": "gloss_way.json",
+    "uid": "X5CuJTOY2g0",
+    "frame_count": 34,
+    "hands_frames": 34,
+    "detection_rate": 1.0
+  },
+  "we": {
+    "status": "ready",
+    "file": "gloss_we.json",
+    "uid": "h58uVxY-2uE",
+    "frame_count": 28,
+    "hands_frames": 27,
+    "detection_rate": 0.9643
+  },
+  "wear": {
+    "status": "ready",
+    "file": "gloss_wear.json",
+    "uid": "bR89wUFYe8I_1",
+    "frame_count": 25,
+    "hands_frames": 21,
+    "detection_rate": 0.84
+  },
+  "welcome": {
+    "status": "ready",
+    "file": "gloss_welcome.json",
+    "uid": "UJHjwQ7yclM",
+    "frame_count": 35,
+    "hands_frames": 35,
+    "detection_rate": 1.0
+  },
+  "what": {
+    "status": "ready",
+    "file": "gloss_what.json",
+    "uid": "4accXsYqRnA",
+    "frame_count": 24,
+    "hands_frames": 24,
+    "detection_rate": 1.0
+  },
+  "when": {
+    "status": "ready",
+    "file": "gloss_when.json",
+    "uid": "mPZ37Qlg4B8",
+    "frame_count": 43,
+    "hands_frames": 43,
+    "detection_rate": 1.0
+  },
+  "where": {
+    "status": "ready",
+    "file": "gloss_where.json",
+    "uid": "8wgrPnyzpMw",
+    "frame_count": 37,
+    "hands_frames": 36,
+    "detection_rate": 0.973
+  },
+  "which": {
+    "status": "ready",
+    "file": "gloss_which.json",
+    "uid": "H0G_jCcuCWU",
+    "frame_count": 38,
+    "hands_frames": 38,
+    "detection_rate": 1.0
+  },
+  "who": {
+    "status": "ready",
+    "file": "gloss_who.json",
+    "uid": "O8jMsqDMiRE",
+    "frame_count": 42,
+    "hands_frames": 33,
+    "detection_rate": 0.7857
+  },
+  "why": {
+    "status": "ready",
+    "file": "gloss_why.json",
+    "uid": "m4fQZijBvjo",
+    "frame_count": 34,
+    "hands_frames": 33,
+    "detection_rate": 0.9706
+  },
+  "with": {
+    "status": "ready",
+    "file": "gloss_with.json",
+    "uid": "-qzWfnV26kw_1",
+    "frame_count": 25,
+    "hands_frames": 25,
+    "detection_rate": 1.0
+  },
+  "woman": {
+    "status": "ready",
+    "file": "gloss_woman.json",
+    "uid": "GoDqsUZU5yk_1",
+    "frame_count": 102,
+    "hands_frames": 100,
+    "detection_rate": 0.9804
+  },
+  "work": {
+    "status": "ready",
+    "file": "gloss_work.json",
+    "uid": "FlZ8Xekr-JA",
+    "frame_count": 30,
+    "hands_frames": 30,
+    "detection_rate": 1.0
+  },
+  "worry": {
+    "status": "ready",
+    "file": "gloss_worry.json",
+    "uid": "wMm24t1NrcM",
+    "frame_count": 61,
+    "hands_frames": 61,
+    "detection_rate": 1.0
+  },
+  "write": {
+    "status": "ready",
+    "file": "gloss_write.json",
+    "uid": "UFePdoNR_KM",
+    "frame_count": 58,
+    "hands_frames": 58,
+    "detection_rate": 1.0
+  },
+  "yes": {
+    "status": "ready",
+    "file": "gloss_yes.json",
+    "uid": "LAT-u9Ww5ZU",
+    "frame_count": 39,
+    "hands_frames": 37,
+    "detection_rate": 0.9487
+  },
+  "you": {
+    "status": "ready",
+    "file": "gloss_you.json",
+    "uid": "QE4UkDB3MyE",
+    "frame_count": 30,
+    "hands_frames": 29,
+    "detection_rate": 0.9667
+  },
+  "your": {
+    "status": "ready",
+    "file": "gloss_your.json",
+    "uid": "7fdPaEyfc9Y_1",
+    "frame_count": 37,
+    "hands_frames": 37,
+    "detection_rate": 1.0
+  },
+  "yourself": {
+    "status": "ready",
+    "file": "gloss_yourself.json",
+    "uid": "P7aSfqQTkTk_1",
+    "frame_count": 41,
+    "hands_frames": 40,
+    "detection_rate": 0.9756
+  },
+  "live": {
+    "status": "ready",
+    "file": "gloss_live.json",
+    "uid": "ea8VG_U1OM4",
+    "frame_count": 37,
+    "hands_frames": 37,
+    "detection_rate": 1.0
+  },
+  "stay": {
+    "status": "ready",
+    "file": "gloss_stay.json",
+    "uid": "IRpEcHFlSk0_1",
+    "frame_count": 48,
+    "hands_frames": 48,
+    "detection_rate": 1.0
+  },
+  "learn": {
+    "status": "ready",
+    "file": "gloss_learn.json",
+    "uid": "MAZVS8doD6E",
+    "frame_count": 52,
+    "hands_frames": 52,
+    "detection_rate": 1.0
+  },
+  "student": {
+    "status": "ready",
+    "file": "gloss_student.json",
+    "uid": "Y66DFt19PyE",
+    "frame_count": 36,
+    "hands_frames": 36,
+    "detection_rate": 1.0
+  },
+  "teacher": {
+    "status": "ready",
+    "file": "gloss_teacher.json",
+    "uid": "Qy_q0sAucuw",
+    "frame_count": 36,
+    "hands_frames": 36,
+    "detection_rate": 1.0
+  },
+  "book": {
+    "status": "ready",
+    "file": "gloss_book.json",
+    "uid": "iCZL3lk119A",
+    "frame_count": 48,
+    "hands_frames": 46,
+    "detection_rate": 0.9583
+  },
+  "car": {
+    "status": "ready",
+    "file": "gloss_car.json",
+    "uid": "SUGgjeP54CQ",
+    "frame_count": 49,
+    "hands_frames": 48,
+    "detection_rate": 0.9796
+  }
+}

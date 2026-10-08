@@ -1,0 +1,14 @@
+{
+  "hello how are you": {
+    "glosses": "HI HOW ARE_YOU",
+    "landmark_file": "hello_landmarks.json"
+  },
+  "thank you": {
+    "glosses": "THANK-YOU",
+    "landmark_file": "thank_you_landmarks.json"
+  },
+  "good morning": {
+    "glosses": "GOOD MORNING",
+    "landmark_file": "good_morning_landmarks.json"
+  }
+}

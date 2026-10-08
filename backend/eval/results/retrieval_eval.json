@@ -1,0 +1,190 @@
+{
+ "locked_refs": false,
+ "threshold": 0.75,
+ "n_probes": 12,
+ "recall_at_1": 1.0,
+ "recall_at_3": 1.0,
+ "admission_accuracy": 1.0,
+ "per_probe": [
+  {
+   "query": "hi how are you",
+   "expected": "hi how are you",
+   "expect_extractive": true,
+   "top1": "hi how are you",
+   "top1_similarity": 1.0,
+   "top3": [
+    "hi how are you",
+    "you are good",
+    "who are you"
+   ],
+   "recall_at_1": true,
+   "recall_at_3": true,
+   "admission_correct": true
+  },
+  {
+   "query": "Hi, How Are You?",
+   "expected": "hi how are you",
+   "expect_extractive": true,
+   "top1": "hi how are you",
+   "top1_similarity": 0.8215,
+   "top3": [
+    "hi how are you",
+    "how are things",
+    "i am fine. thank you sir"
+   ],
+   "recall_at_1": true,
+   "recall_at_3": true,
+   "admission_correct": true
+  },
+  {
+   "query": "hi",
+   "expected": "hi how are you",
+   "expect_extractive": false,
+   "top1": "hi how are you",
+   "top1_similarity": 0.6181,
+   "top3": [
+    "hi how are you",
+    "nice to meet you",
+    "who are you"
+   ],
+   "recall_at_1": true,
+   "recall_at_3": true,
+   "admission_correct": true
+  },
+  {
+   "query": "please help me",
+   "expected": "help me",
+   "expect_extractive": true,
+   "top1": "help me",
+   "top1_similarity": 0.8007,
+   "top3": [
+    "help me",
+    "can i help you",
+    "how can i help you"
+   ],
+   "recall_at_1": true,
+   "recall_at_3": true,
+   "admission_correct": true
+  },
+  {
+   "query": "can you please repeat that",
+   "expected": "can you repeat that please",
+   "expect_extractive": true,
+   "top1": "can you repeat that please",
+   "top1_similarity": 0.9254,
+   "top3": [
+    "can you repeat that please",
+    "i do not mean it",
+    "i promise"
+   ],
+   "recall_at_1": true,
+   "recall_at_3": true,
+   "admission_correct": true
+  },
+  {
+   "query": "i need some water",
+   "expected": "i need water",
+   "expect_extractive": true,
+   "top1": "i need water",
+   "top1_similarity": 0.9253,
+   "top3": [
+    "i need water",
+    "bring water for me",
+    "pour some more water into the glass"
+   ],
+   "recall_at_1": true,
+   "recall_at_3": true,
+   "admission_correct": true
+  },
+  {
+   "query": "how are you",
+   "expected": "hi how are you",
+   "expect_extractive": true,
+   "top1": "hi how are you",
+   "top1_similarity": 0.7629,
+   "top3": [
+    "hi how are you",
+    "who are you",
+    "you are good"
+   ],
+   "recall_at_1": true,
+   "recall_at_3": true,
+   "admission_correct": true
+  },
+  {
+   "query": "good morning",
+   "expected": null,
+   "expect_extractive": false,
+   "top1": "hi how are you",
+   "top1_similarity": 0.4885,
+   "top3": [
+    "hi how are you",
+    "you are good",
+    "i am tired"
+   ],
+   "recall_at_1": false,
+   "recall_at_3": false,
+   "admission_correct": true
+  },
+  {
+   "query": "namaste",
+   "expected": null,
+   "expect_extractive": false,
+   "top1": "who are you",
+   "top1_similarity": 0.4012,
+   "top3": [
+    "who are you",
+    "speak softly",
+    "try to understand"
+   ],
+   "recall_at_1": false,
+   "recall_at_3": false,
+   "admission_correct": true
+  },
+  {
+   "query": "quantum physics is difficult",
+   "expected": null,
+   "expect_extractive": false,
+   "top1": "how are things",
+   "top1_similarity": 0.3982,
+   "top3": [
+    "how are things",
+    "do not be stubborn",
+    "i am afraid of that"
+   ],
+   "recall_at_1": false,
+   "recall_at_3": false,
+   "admission_correct": true
+  },
+  {
+   "query": "the weather is nice today",
+   "expected": null,
+   "expect_extractive": false,
+   "top1": "are you free today",
+   "top1_similarity": 0.4646,
+   "top3": [
+    "are you free today",
+    "hi how are you",
+    "i am feeling cold"
+   ],
+   "recall_at_1": false,
+   "recall_at_3": false,
+   "admission_correct": true
+  },
+  {
+   "query": "what is your name",
+   "expected": null,
+   "expect_extractive": false,
+   "top1": "my name is xxxxxxxx",
+   "top1_similarity": 0.5796,
+   "top3": [
+    "my name is xxxxxxxx",
+    "who are you",
+    "what is your phone number"
+   ],
+   "recall_at_1": false,
+   "recall_at_3": false,
+   "admission_correct": true
+  }
+ ]
+}

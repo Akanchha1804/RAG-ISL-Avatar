@@ -1,0 +1,836 @@
+{
+ "locked_refs": false,
+ "n": 101,
+ "exact_match": 82,
+ "exact_match_rate": 0.8119,
+ "bleu": {
+  "bleu": 81.05,
+  "precisions": [
+   95.04,
+   84.71,
+   76.76,
+   69.84
+  ],
+  "brevity_penalty": 1.0,
+  "hyp_len": 343,
+  "ref_len": 330
+ },
+ "rougeL": {
+  "rougeL_f1_mean": 0.9519,
+  "n": 101
+ },
+ "meteor": {
+  "meteor_mean": 0.9137,
+  "n": 101
+ },
+ "per_sentence": [
+  {
+   "sentence": "He is going into the room",
+   "method": "direct_lookup",
+   "hypothesis": "HE INTO ROOM GO",
+   "reference": "HE INTO ROOM GO",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "No need to worry dont worry",
+   "method": "direct_lookup",
+   "hypothesis": "NEED WORRY WORRY NO NOT",
+   "reference": "NEED WORRY NOT",
+   "corrected": true,
+   "exact": false
+  },
+  {
+   "sentence": "This place is beautiful",
+   "method": "direct_lookup",
+   "hypothesis": "THIS PLACE BEAUTIFUL",
+   "reference": "THIS PLACE BEAUTIFUL",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "are you free today",
+   "method": "direct_lookup",
+   "hypothesis": "TODAY YOU FREE",
+   "reference": "TODAY YOU FREE",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "are you hiding something",
+   "method": "direct_lookup",
+   "hypothesis": "YOU SOMETHING HIDE",
+   "reference": "YOU SOMETHING HIDE",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "bring water for me",
+   "method": "direct_lookup",
+   "hypothesis": "WATER ME BRING",
+   "reference": "WATER ME BRING",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "can i help you",
+   "method": "direct_lookup",
+   "hypothesis": "I YOU HELP",
+   "reference": "I YOU HELP",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "can you repeat that please",
+   "method": "direct_lookup",
+   "hypothesis": "YOU PLEASE REPEAT",
+   "reference": "YOU PLEASE REPEAT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "comb your hair",
+   "method": "direct_lookup",
+   "hypothesis": "YOU HAIR COMB",
+   "reference": "YOU HAIR COMB",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "congratulations",
+   "method": "direct_lookup",
+   "hypothesis": "CONGRATULATIIONS",
+   "reference": "CONGRATULATIIONS",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "could you please talk slower",
+   "method": "direct_lookup",
+   "hypothesis": "YOU PLEASE SLOWER TALK",
+   "reference": "YOU PLEASE TALK SLOWER",
+   "corrected": true,
+   "exact": false
+  },
+  {
+   "sentence": "do me a favour",
+   "method": "direct_lookup",
+   "hypothesis": "ME FAVOUR DO",
+   "reference": "ME FAVOUR DO",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "do not abuse him",
+   "method": "direct_lookup",
+   "hypothesis": "HIM ABUSE NOT",
+   "reference": "HIM ABUSE NOT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "do not be stubborn",
+   "method": "direct_lookup",
+   "hypothesis": "STUBBORN DO NOT",
+   "reference": "STUBBORN NOT",
+   "corrected": true,
+   "exact": false
+  },
+  {
+   "sentence": "do not hurt me",
+   "method": "direct_lookup",
+   "hypothesis": "ME HURT NOT",
+   "reference": "ME HURT NOT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "do not make me angry",
+   "method": "direct_lookup",
+   "hypothesis": "ME ANGRY MAKE NOT",
+   "reference": "ME ANGRY MAKE NOT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "do not take it to the heart",
+   "method": "direct_lookup",
+   "hypothesis": "IT HEART TAKE NOT",
+   "reference": "IT HEART TAKE NOT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "do not worry",
+   "method": "direct_lookup",
+   "hypothesis": "WORRY NOT",
+   "reference": "WORRY NOT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "do you need something",
+   "method": "direct_lookup",
+   "hypothesis": "YOU SOMETHING NEED",
+   "reference": "YOU SOMETHING NEED",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "go and sleep",
+   "method": "direct_lookup",
+   "hypothesis": "GO SLEEP",
+   "reference": "GO SLEEP",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "had your food",
+   "method": "direct_lookup",
+   "hypothesis": "YOUR FOOD",
+   "reference": "YOUR FOOD",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "he came by train",
+   "method": "direct_lookup",
+   "hypothesis": "HE CAME TRAIN",
+   "reference": "HE CAME TRAIN",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "he is on the way",
+   "method": "direct_lookup",
+   "hypothesis": "HE ON WAY",
+   "reference": "HE ON WAY",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "he she is my friend",
+   "method": "direct_lookup",
+   "hypothesis": "HE SHE MY FRIEND",
+   "reference": "HE SHE MY FRIEND",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "he would be coming today",
+   "method": "direct_lookup",
+   "hypothesis": "TODAY HE COME",
+   "reference": "TODAY HE COME",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "help me",
+   "method": "direct_lookup",
+   "hypothesis": "ME HELP",
+   "reference": "ME HELP",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "hi how are you",
+   "method": "direct_lookup",
+   "hypothesis": "NAMASTE YOU HOW",
+   "reference": "NAMASTE YOU HOW",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "how are things",
+   "method": "direct_lookup",
+   "hypothesis": "THINGS HOW",
+   "reference": "THINGS HOW",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "how can i help you",
+   "method": "direct_lookup",
+   "hypothesis": "I YOU HELP HOW",
+   "reference": "I YOU HELP HOW",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "how can i trust you",
+   "method": "direct_lookup",
+   "hypothesis": "I YOU TRUST HOW",
+   "reference": "I YOU TRUST HOW",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "how dare you",
+   "method": "direct_lookup",
+   "hypothesis": "YOU DARE HOW",
+   "reference": "YOU DARE HOW",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "how old are you",
+   "method": "direct_lookup",
+   "hypothesis": "OLD YOU HOW",
+   "reference": "YOU AGE WHAT",
+   "corrected": true,
+   "exact": false
+  },
+  {
+   "sentence": "i am (age)",
+   "method": "direct_lookup",
+   "hypothesis": "I (AGE)",
+   "reference": "I (AGE)",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i am afraid of that",
+   "method": "direct_lookup",
+   "hypothesis": "I AFRAID",
+   "reference": "I AFRAID",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i am crying",
+   "method": "direct_lookup",
+   "hypothesis": "I CRY",
+   "reference": "I CRY",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i am feeling bored",
+   "method": "direct_lookup",
+   "hypothesis": "I BORED FEEL",
+   "reference": "I BORED",
+   "corrected": true,
+   "exact": false
+  },
+  {
+   "sentence": "i am feeling cold",
+   "method": "direct_lookup",
+   "hypothesis": "I COLD FEEL",
+   "reference": "I COLD",
+   "corrected": true,
+   "exact": false
+  },
+  {
+   "sentence": "i am fine. thank you sir",
+   "method": "direct_lookup",
+   "hypothesis": "I FINE THANK YOU SIR",
+   "reference": "I FINE THANK YOU SIR",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i am hungry",
+   "method": "direct_lookup",
+   "hypothesis": "I HUNGRY",
+   "reference": "I HUNGRY",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i am in dilemma what to do",
+   "method": "direct_lookup",
+   "hypothesis": "I IN DILEMMA TO DO WHAT",
+   "reference": "I DILEMMA DO WHAT",
+   "corrected": true,
+   "exact": false
+  },
+  {
+   "sentence": "i am not really sure",
+   "method": "direct_lookup",
+   "hypothesis": "I REALLY SURE NOT",
+   "reference": "I SURE NOT",
+   "corrected": true,
+   "exact": false
+  },
+  {
+   "sentence": "i am really grateful",
+   "method": "direct_lookup",
+   "hypothesis": "I REALLY GRATEFUL",
+   "reference": "I REALLY GRATEFUL",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i am sitting in the class",
+   "method": "direct_lookup",
+   "hypothesis": "I IN CLASS SIT",
+   "reference": "I IN CLASS SIT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i am so sorry to hear that",
+   "method": "direct_lookup",
+   "hypothesis": "I SO SORRY TO HEAR",
+   "reference": "I SORRY TO HEAR",
+   "corrected": true,
+   "exact": false
+  },
+  {
+   "sentence": "i am suffering from fever",
+   "method": "direct_lookup",
+   "hypothesis": "I SUFFER FROM FEVER",
+   "reference": "I SUFFER FROM FEVER",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i am tired",
+   "method": "direct_lookup",
+   "hypothesis": "I TIRED",
+   "reference": "I TIRED",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i am very happy",
+   "method": "direct_lookup",
+   "hypothesis": "I VERY HAPPY",
+   "reference": "I VERY HAPPY",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i can not help you there",
+   "method": "direct_lookup",
+   "hypothesis": "I YOU THERE HELP NOT",
+   "reference": "THERE I YOU HELP NOT",
+   "corrected": true,
+   "exact": false
+  },
+  {
+   "sentence": "i do not agree",
+   "method": "direct_lookup",
+   "hypothesis": "I AGREE NOT",
+   "reference": "I AGREE NOT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i do not like it",
+   "method": "direct_lookup",
+   "hypothesis": "I IT LIKE NOT",
+   "reference": "I IT LIKE NOT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i do not mean it",
+   "method": "direct_lookup",
+   "hypothesis": "I IT MEAN NOT",
+   "reference": "I IT MEAN NOT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i dont agree",
+   "method": "direct_lookup",
+   "hypothesis": "I AGREE NOT",
+   "reference": "I AGREE NOT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i enjoyed a lot",
+   "method": "direct_lookup",
+   "hypothesis": "I LOT ENJOY",
+   "reference": "I ENJOY LOT",
+   "corrected": true,
+   "exact": false
+  },
+  {
+   "sentence": "i got hurt",
+   "method": "direct_lookup",
+   "hypothesis": "I HAVE HURT",
+   "reference": "I HURT",
+   "corrected": true,
+   "exact": false
+  },
+  {
+   "sentence": "i like you i love you",
+   "method": "direct_lookup",
+   "hypothesis": "I LIKE YOU I LOVE YOU",
+   "reference": "I LIKE YOU I LOVE YOU",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i need water",
+   "method": "direct_lookup",
+   "hypothesis": "I WATER NEED",
+   "reference": "I WATER NEED",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i promise",
+   "method": "direct_lookup",
+   "hypothesis": "I PROMISE",
+   "reference": "I PROMISE",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i really appreciate it",
+   "method": "direct_lookup",
+   "hypothesis": "I REALLY IT APPRECIATE",
+   "reference": "I REALLY IT APPRECIATE",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i somehow got to know about it",
+   "method": "direct_lookup",
+   "hypothesis": "I SOMEHOW HAVE ABOUT IT KNOW",
+   "reference": "I SOMEHOW HAVE ABOUT IT KNOW",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "i was stopped by some one",
+   "method": "direct_lookup",
+   "hypothesis": "I BY SOMEONE STOP",
+   "reference": "SOMEONE I STOP",
+   "corrected": true,
+   "exact": false
+  },
+  {
+   "sentence": "it does not make any difference to me",
+   "method": "direct_lookup",
+   "hypothesis": "IT ANY DIFFERENCE TO ME MAKE NOT",
+   "reference": "IT ANY DIFFERENCE TO ME MAKE NOT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "it was nice chatting with you",
+   "method": "direct_lookup",
+   "hypothesis": "IT NICE WITH YOU CHAT",
+   "reference": "IT NICE WITH YOU CHAT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "let him take time",
+   "method": "direct_lookup",
+   "hypothesis": "LET HIM TIME TAKE",
+   "reference": "LET HIM TIME TAKE",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "my name is xxxxxxxx",
+   "method": "direct_lookup",
+   "hypothesis": "MY NAME XXXXXXXX",
+   "reference": "MY NAME XXXXXXXX",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "nice to meet you",
+   "method": "direct_lookup",
+   "hypothesis": "NICE YOU MEET",
+   "reference": "NICE YOU MEET",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "now onwards he will never hurt you",
+   "method": "direct_lookup",
+   "hypothesis": "NOW ONWARDS HE YOU HURT NEVER",
+   "reference": "NOW ONWARDS HE YOU HURT NEVER",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "pour some more water into the glass",
+   "method": "direct_lookup",
+   "hypothesis": "SOME MORE WATER INTO GLASS POUR",
+   "reference": "SOME MORE WATER INTO GLASS POUR",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "prepare the bed",
+   "method": "direct_lookup",
+   "hypothesis": "BED PREPARE",
+   "reference": "BED PREPARE",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "serve the food",
+   "method": "direct_lookup",
+   "hypothesis": "FOOD SERVE",
+   "reference": "FOOD SERVE",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "shall we go outside",
+   "method": "direct_lookup",
+   "hypothesis": "WE OUTSIDE GO",
+   "reference": "WE OUTSIDE GO",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "speak softly",
+   "method": "direct_lookup",
+   "hypothesis": "SOFTLY SPEAK",
+   "reference": "SPEAK SOFTLY",
+   "corrected": true,
+   "exact": false
+  },
+  {
+   "sentence": "take care of yourself",
+   "method": "direct_lookup",
+   "hypothesis": "TAKE CARE OF YOURSELF",
+   "reference": "YOU TAKE CARE",
+   "corrected": true,
+   "exact": false
+  },
+  {
+   "sentence": "tell me truth",
+   "method": "direct_lookup",
+   "hypothesis": "ME TRUTH TELL",
+   "reference": "ME TRUTH TELL",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "thank you so much",
+   "method": "direct_lookup",
+   "hypothesis": "THANK YOU SO MUCH",
+   "reference": "THANK YOU SO MUCH",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "that is so kind of you",
+   "method": "direct_lookup",
+   "hypothesis": "KIND YOU",
+   "reference": "KIND YOU",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "try to understand",
+   "method": "direct_lookup",
+   "hypothesis": "TRY TO UNDERSTAND",
+   "reference": "TRY UNDERSTAND",
+   "corrected": true,
+   "exact": false
+  },
+  {
+   "sentence": "turn on light turn off light",
+   "method": "direct_lookup",
+   "hypothesis": "TURN ON LIGHT TURN OFF LIGHT",
+   "reference": "TURN ON LIGHT TURN OFF LIGHT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "we are all with you",
+   "method": "direct_lookup",
+   "hypothesis": "WE ALL WITH YOU",
+   "reference": "WE ALL WITH YOU",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "wear the shirt",
+   "method": "direct_lookup",
+   "hypothesis": "SHIRT WEAR",
+   "reference": "SHIRT WEAR",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "what are you doing",
+   "method": "direct_lookup",
+   "hypothesis": "YOU DO WHAT",
+   "reference": "YOU DO WHAT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "what did you tell him",
+   "method": "direct_lookup",
+   "hypothesis": "YOU HIM TELL WHAT",
+   "reference": "YOU HIM TELL WHAT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "what do you do",
+   "method": "direct_lookup",
+   "hypothesis": "YOU DO WHAT",
+   "reference": "YOU DO WHAT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "what do you think",
+   "method": "direct_lookup",
+   "hypothesis": "YOU THINK WHAT",
+   "reference": "YOU THINK WHAT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "what do you want to become",
+   "method": "direct_lookup",
+   "hypothesis": "YOU WANT BECOME WHAT",
+   "reference": "YOU WANT BECOME WHAT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "what happened",
+   "method": "direct_lookup",
+   "hypothesis": "HAPPEN WHAT",
+   "reference": "HAPPEN WHAT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "what have you planned for your career",
+   "method": "direct_lookup",
+   "hypothesis": "HAVE YOU YOUR CAREER PLAN WHAT",
+   "reference": "YOU YOUR CAREER PLAN WHAT",
+   "corrected": true,
+   "exact": false
+  },
+  {
+   "sentence": "what is your phone number",
+   "method": "direct_lookup",
+   "hypothesis": "YOUR PHONE NUMBER WHAT",
+   "reference": "YOUR PHONE NUMBER WHAT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "what you want",
+   "method": "direct_lookup",
+   "hypothesis": "YOU WANT WHAT",
+   "reference": "YOU WANT WHAT",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "when will the train leave",
+   "method": "direct_lookup",
+   "hypothesis": "TRAIN LEAVE WHEN",
+   "reference": "TRAIN LEAVE WHEN",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "where are you from",
+   "method": "direct_lookup",
+   "hypothesis": "YOU FROM WHERE",
+   "reference": "YOU FROM WHERE",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "which college school are you from",
+   "method": "direct_lookup",
+   "hypothesis": "COLLEGE SCHOOL YOU FROM WHICH",
+   "reference": "COLLEGE SCHOOL YOU FROM WHICH",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "who are you",
+   "method": "direct_lookup",
+   "hypothesis": "YOU WHO",
+   "reference": "YOU WHO",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "why are you angry",
+   "method": "direct_lookup",
+   "hypothesis": "YOU ANGRY WHY",
+   "reference": "YOU ANGRY WHY",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "why are you crying",
+   "method": "direct_lookup",
+   "hypothesis": "YOU CRY WHY",
+   "reference": "YOU CRY WHY",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "why are you disappointed",
+   "method": "direct_lookup",
+   "hypothesis": "YOU DISAPPOINTED WHY",
+   "reference": "YOU DISAPPOINTED WHY",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "you are bad",
+   "method": "direct_lookup",
+   "hypothesis": "YOU BAD",
+   "reference": "YOU BAD",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "you are good",
+   "method": "direct_lookup",
+   "hypothesis": "YOU GOOD",
+   "reference": "YOU GOOD",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "you are welcome",
+   "method": "direct_lookup",
+   "hypothesis": "YOU WELCOME",
+   "reference": "YOU WELCOME",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "you can do it",
+   "method": "direct_lookup",
+   "hypothesis": "YOU IT DO",
+   "reference": "YOU IT DO",
+   "corrected": false,
+   "exact": true
+  },
+  {
+   "sentence": "you do anything, i do not care",
+   "method": "direct_lookup",
+   "hypothesis": "YOU ANYTHING I CARE NOT",
+   "reference": "YOU ANYTHING DO I CARE NOT",
+   "corrected": true,
+   "exact": false
+  },
+  {
+   "sentence": "you need a medicine, take this one",
+   "method": "direct_lookup",
+   "hypothesis": "YOU NEED MEDICINE TAKE THIS ONE",
+   "reference": "YOU NEED MEDICINE THIS ONE TAKE",
+   "corrected": true,
+   "exact": false
+  }
+ ]
+}
