@@ -144,8 +144,13 @@ public class AvatarWebSocketClient : MonoBehaviour
             }
             else if (message.type == "landmark_update")
             {
-                // Always reload so re-playing the same gloss restarts the animation.
-                ApplyLandmark(message.landmark_file, force: true);
+                // Composed (novel) sentences carry a per-gloss motion playlist
+                // instead of a sentence file: play clips in signing order.
+                // Sentence hits carry an empty playlist and play the file.
+                if (message.playlist != null && message.playlist.Length > 0)
+                    PlayPlaylist(message.playlist);
+                else
+                    ApplyLandmark(message.landmark_file, force: true);
             }
             else if (message.type == "error")
             {
@@ -179,6 +184,39 @@ public class AvatarWebSocketClient : MonoBehaviour
 
         OnLandmarkLoaded?.Invoke(landmarkFile);
         Debug.Log($"[AvatarWS] Landmark requested: {landmarkFile}");
+    }
+
+    /// <summary>
+    /// Play a composed per-gloss motion playlist in signing order.
+    /// URLs look like "/landmarks/gloss_x.json": the file name is carried
+    /// to the mapper, which fetches each clip over HTTP in turn.
+    /// </summary>
+    private void PlayPlaylist(PlaylistItem[] playlist)
+    {
+        if (handPoseMapper == null)
+            handPoseMapper = GetComponent<HandPoseMapper>();
+        if (handPoseMapper == null)
+            handPoseMapper = GetComponentInChildren<HandPoseMapper>();
+        if (handPoseMapper == null)
+        {
+            Debug.LogError("[AvatarWS] No HandPoseMapper for playlist playback.");
+            return;
+        }
+
+        var files = new System.Collections.Generic.List<string>();
+        foreach (PlaylistItem item in playlist)
+        {
+            if (item == null)
+                continue;
+            string url = item.landmark_clip_url;
+            if (string.IsNullOrEmpty(url))
+                continue;
+            int slash = url.LastIndexOf('/');
+            files.Add(slash >= 0 ? url.Substring(slash + 1) : url);
+        }
+        handPoseMapper.PlayPlaylist(files);
+        OnLandmarkLoaded?.Invoke($"playlist:{files.Count}");
+        Debug.Log($"[AvatarWS] Playlist requested ({files.Count} clips).");
     }
 
     public async void RequestLandmark(string landmarkFile)
@@ -232,6 +270,14 @@ public class AvatarWebSocketClient : MonoBehaviour
         public string landmark_url;
         public string message;
         public string glosses;
+        public PlaylistItem[] playlist;
+    }
+
+    [Serializable]
+    private class PlaylistItem
+    {
+        public string gloss;
+        public string landmark_clip_url;
     }
 
     [Serializable]

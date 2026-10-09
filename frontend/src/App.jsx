@@ -275,7 +275,7 @@ function App() {
 
           <div className="bg-white/10 backdrop-blur rounded-xl p-6">
             <h2 className="text-lg font-semibold mb-4 text-center">Avatar Viewport</h2>
-            <AvatarView landmarkUrl={result?.landmark_url || null} animation={result?.animation || null} />
+            <AvatarView landmarkUrl={result?.landmark_url || null} animation={result?.animation || null} glossSequence={result?.gloss_sequence || null} />
           </div>
         </div>
       </div>

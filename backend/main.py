@@ -993,12 +993,22 @@ async def pipeline_websocket(websocket: WebSocket):
                     },
                 })
 
-                # Notify Unity avatars: file name + URL only (data over HTTP)
+                # Notify Unity avatars: sentence file + per-gloss motion playlist.
+                # Sentence level: landmark_file set, playlist empty -> play file.
+                # Composed level: landmark_file empty, playlist carries the
+                # per-gloss landmark clips in signing order -> play in sequence.
+                # (Data over HTTP; WS carries references only.)
                 await ws_manager.broadcast_to_avatars({
                     "type": "landmark_update",
                     "landmark_file": result.get("landmark_file", ""),
                     "landmark_url": result.get("landmark_url", ""),
                     "glosses": result.get("glosses", ""),
+                    "playlist": [
+                        {"gloss": e.get("gloss", ""),
+                         "landmark_clip_url": e.get("landmark_clip_url", "")}
+                        for e in (result.get("animation") or {}).get("clip_playlist", [])
+                        if e.get("landmark_clip_url")
+                    ],
                 })
 
             except WebSocketDisconnect:

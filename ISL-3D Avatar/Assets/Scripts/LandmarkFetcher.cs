@@ -198,6 +198,40 @@ public class LandmarkFetcher : MonoBehaviour
                     Debug.Log($"LandmarkFetcher: matched '{response.matched_sentence}' (method: {response.method})");
                 FetchLandmarksFromBackend(response.landmark_file);
             }
+            else if (response != null && response.animation != null
+                && response.animation.clip_playlist != null
+                && response.animation.clip_playlist.Length > 0)
+            {
+                // Composed (novel) sentence: no sentence file, so queue the
+                // per-gloss landmark clips in signing order instead of failing.
+                var files = new System.Collections.Generic.List<string>();
+                foreach (AnimationClipItem clip in response.animation.clip_playlist)
+                {
+                    if (clip == null || string.IsNullOrEmpty(clip.landmark_clip_url))
+                        continue;
+                    int slash = clip.landmark_clip_url.LastIndexOf('/');
+                    string file = slash >= 0
+                        ? clip.landmark_clip_url.Substring(slash + 1)
+                        : clip.landmark_clip_url;
+                    if (!string.IsNullOrEmpty(file))
+                        files.Add(file);
+                }
+                if (files.Count > 0)
+                {
+                    if (logResponses)
+                        Debug.Log($"LandmarkFetcher: composed playlist ({files.Count} clips).");
+                    EnsureMapper();
+                    if (handPoseMapper != null)
+                        handPoseMapper.PlayPlaylist(files);
+                    else
+                        OnLoadError?.Invoke("No HandPoseMapper for playlist playback.");
+                }
+                else
+                {
+                    Debug.LogWarning("LandmarkFetcher: composed result has no playable clips.");
+                    OnLoadError?.Invoke("No playable clips for: " + sentence);
+                }
+            }
             else
             {
                 Debug.LogWarning("LandmarkFetcher: no landmark match for: " + sentence);
@@ -233,17 +267,22 @@ public class LandmarkFetcher : MonoBehaviour
 
     void PushToMapper()
     {
+        EnsureMapper();
+
+        if (handPoseMapper != null && currentDataset != null)
+            handPoseMapper.SetDataset(currentDataset);
+        else if (logResponses)
+            Debug.Log("LandmarkFetcher: no HandPoseMapper found to receive dataset.");
+    }
+
+    void EnsureMapper()
+    {
         if (handPoseMapper == null)
         {
             handPoseMapper = GetComponent<HandPoseMapper>();
             if (handPoseMapper == null)
                 handPoseMapper = GetComponentInChildren<HandPoseMapper>();
         }
-
-        if (handPoseMapper != null && currentDataset != null)
-            handPoseMapper.SetDataset(currentDataset);
-        else if (logResponses)
-            Debug.Log("LandmarkFetcher: no HandPoseMapper found to receive dataset.");
     }
 
     // ==========================================
@@ -267,5 +306,19 @@ public class LandmarkFetcher : MonoBehaviour
         public float similarity;
         public string landmark_url;
         public string method;
+        public AnimationData animation;
+    }
+
+    [Serializable]
+    private class AnimationData
+    {
+        public AnimationClipItem[] clip_playlist;
+    }
+
+    [Serializable]
+    private class AnimationClipItem
+    {
+        public string gloss;
+        public string landmark_clip_url;
     }
 }

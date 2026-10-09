@@ -119,3 +119,49 @@ def test_pipeline_ws_broadcasts_landmark_update_to_avatar(client):
     assert update["landmark_file"] == "hello_landmarks.json"
     assert update["landmark_url"] == "/landmarks/hello_landmarks.json"
     assert "frames" not in update
+    assert update["playlist"] == []  # sentence level: file plays, no playlist
+
+
+def test_pipeline_ws_broadcasts_playlist_for_composed(client, monkeypatch):
+    """Composed results broadcast per-gloss motion clips for Unity sequencing."""
+    import main
+
+    async def fake_animation(seq, sentence_hit=None):
+        assert sentence_hit is None
+        return {
+            "clip_playlist": [
+                {"gloss": "A", "landmark_clip_url": "/landmarks/gloss_a.json",
+                 "clip_url": None},
+                {"gloss": "B", "landmark_clip_url": "",
+                 "clip_url": "/clips/u.mp4"},
+            ],
+            "resolved_tokens": ["A", "B"],
+            "unresolved_tokens": [],
+            "unsupported_tokens": [],
+            "suggestions": {},
+            "retrieval_detail": {"level": "composed"},
+        }
+
+    # NOTE: stage_generate runs in an executor (sync); only the animation
+    # stage is awaited directly, so this mock must stay sync.
+    def fake_generate(*a, **k):
+        return {"glosses": "A B", "gloss_sequence": ["A", "B"],
+                "method": "word_by_word", "matched_sentence": None,
+                "similarity": None, "landmark_file": "", "landmark_url": ""}
+
+    monkeypatch.setattr(main, "stage_generate", fake_generate)
+    monkeypatch.setattr(main, "stage_resolve_animation", fake_animation)
+
+    with client.websocket_connect("/api/avatar/ws") as avatar:
+        with client.websocket_connect("/api/pipeline/ws") as frontend:
+            frontend.send_json({"input_mode": "text", "text": "a b"})
+            while True:
+                msg = frontend.receive_json()
+                if msg.get("stage") == "complete":
+                    break
+        update = avatar.receive_json()
+    assert update["landmark_file"] == ""
+    # Only motion-carrying entries ship; reference-only clips stay out.
+    assert update["playlist"] == [
+        {"gloss": "A", "landmark_clip_url": "/landmarks/gloss_a.json"}
+    ]

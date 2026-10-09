@@ -1,0 +1,15 @@
+{
+ "locked_refs": false,
+ "files": 288,
+ "violations": [],
+ "guard_reliance": {
+  "x": 0.167,
+  "y": 0.035,
+  "z": 1.0
+ },
+ "raw_wrist_center_y": {
+  "min": 0.318,
+  "median": 0.717,
+  "max": 0.928
+ }
+}
