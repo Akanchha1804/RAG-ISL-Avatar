@@ -41,12 +41,15 @@ function lmVec(lm, out) {
   return out;
 }
 
-function basisFromPalm(p0, p5, p9) {
+function basisFromPalm(p0, p5, across) {
+  // `across` must be the knuckle line (index MCP -> pinky MCP), NOT
+  // wrist -> middle MCP. Those two are near-parallel on a flat hand
+  // (2-19 deg apart in the source data), so their cross product is
+  // numerical noise and the wrist roll came out random frame to frame.
   const x = new THREE.Vector3().subVectors(p5, p0);
-  const m = new THREE.Vector3().subVectors(p9, p0);
-  if (x.lengthSq() < 1e-10 || m.lengthSq() < 1e-10) return null;
+  if (x.lengthSq() < 1e-10 || across.lengthSq() < 1e-10) return null;
   x.normalize();
-  const z = new THREE.Vector3().crossVectors(x, m);
+  const z = new THREE.Vector3().crossVectors(x, across);
   if (z.lengthSq() < 1e-10) return null;
   z.normalize();
   const y = new THREE.Vector3().crossVectors(z, x).normalize();
@@ -101,13 +104,296 @@ const _capB = new THREE.Vector3();
 const _capC = new THREE.Vector3();
 const _capD = new THREE.Vector3();
 
-// Per-clip signing-space calibration (M6 fix): source videos frame the
-// signer differently (waist-level vs chest-level), so absolute image coords
-// reproduce the wrong height on the avatar. Each clip's wrist trajectory
-// bbox is mapped into the signing box instead. Min-span guarded: a static
-// hold maps mid-box rather than amplifying jitter into full-box swings.
-const CALIB_MIN_SPAN_XY = 0.12;
+// Torso LENGTH is a poor proxy for torso DEPTH. 0.24 * |hips->neck| gives
+// this avatar a 0.113 m radius, but its chest actually reaches 0.175 m from
+// the spine axis at y 1.40-1.50 - precisely the height the hands are driven
+// to - so the clamp below happily parked the wrists ~3 cm INSIDE the bust and
+// the torso mesh swallowed the palms ("the hands join and part of them
+// disappears"). The clamp is also a single clamped POINT, and a 16 cm hand is
+// not a point. Both are fixed by measuring the real geometry once at load.
+const TORSO_PROFILE_BANDS = 24;
+// The chest surface is sampled in a narrow slab around the spine axis: that
+// is where a namaste hand ends up, and it avoids the shoulders/arms, which
+// sit at the same heights out at |x| > 0.15.
+const TORSO_MIDLINE_HALF = 0.06;
+const HAND_CLEARANCE = 0.005;
+// A hand is ~16 cm long, so the surface that matters is the furthest-forward
+// torso point anywhere across that vertical span. Sampling only the wrist
+// height both misses the bust apex and lets single-band dropouts undo the
+// guard.
+const HAND_SPAN_UP = 0.17;
+const HAND_SPAN_DOWN = 0.04;
+const HAND_SPAN_SAMPLES = 9;
+// A hand box can project far along Z while edge-on; cap the standoff so a
+// degenerate orientation can never fling the arm forward.
+const HAND_BACK_MAX = 0.12;
+// Mesh that hangs past the last finger joint.
+const FINGER_TIP_MARGIN = 0.015;
+// Sampled hand vertices kept for the penetration probe.
+const PEN_POINT_MAX = 900;
+const _handM = new THREE.Matrix4();
+const _handV = new THREE.Vector3();
+const _bodyV = new THREE.Vector3();
+const _bodyV2 = new THREE.Vector3();
+
+// One pass over the skinned meshes measures everything the collision code
+// needs: the torso's forward surface per height band, each hand's vertex box
+// in its own bone frame (so the guard can account for the hand's real volume),
+// and the hand's thickness (the physical floor for the contact assist).
+// Returns null when the rig lacks what it needs; the capsule then remains.
+const measureBody = (vrm) => {
+  const rawBone = (name) => {
+    try {
+      return vrm.humanoid.getRawBoneNode(name);
+    } catch {
+      return null;
+    }
+  };
+  const hipsNode = rawBone('hips');
+  const neckNode = rawBone('neck') || rawBone('head');
+  if (!hipsNode || !neckNode) return null;
+  vrm.scene.updateMatrixWorld(true);
+  const hips = new THREE.Vector3();
+  const neck = new THREE.Vector3();
+  hipsNode.getWorldPosition(hips);
+  neckNode.getWorldPosition(neck);
+  const axisLen = neck.distanceTo(hips);
+  if (!(axisLen > 1e-3)) return null;
+  const handBones = {};
+  const handInv = {};
+  // Hand vertices kept for the penetration probe: every 8th vertex owned by
+  // the hand or one of its finger/thumb bones, stored in ITS OWN bone's bind
+  // frame, so the probe reproduces the posed mesh surface exactly.
+  const penPts = { left: [], right: [] };
+  const boneInv = new Map();
+  for (const side of ['left', 'right']) {
+    const hand = rawBone(side + 'Hand');
+    if (!hand) continue;
+    // Finger/thumb bones are children of the hand in every VRM rig, so a
+    // subtree walk gives the full hand vertex domain.
+    const set = new Set([hand]);
+    hand.traverse((o) => {
+      if (o.isBone) set.add(o);
+    });
+    handBones[side] = set;
+    handInv[side] = new THREE.Matrix4().copy(hand.matrixWorld).invert();
+  }
+  // Bone-filtered torso set. Needed for the LATERAL half-width, where the
+  // arms must be excluded (they occupy the same heights out at the sides),
+  // and as a second source for the front depth. The front is ALSO measured
+  // geometrically (midline slab) because the bust/clothing vertices are owned
+  // by secondary J_Sec_* bones, so a bone filter alone leaves holes.
+  const torsoBones = new Set();
+  for (const name of ['hips', 'spine', 'chest', 'upperChest']) {
+    const b = rawBone(name);
+    if (b) torsoBones.add(b);
+  }
+  const frontZ = new Float32Array(TORSO_PROFILE_BANDS).fill(-Infinity);
+  const halfX = new Float32Array(TORSO_PROFILE_BANDS);
+  const boxMin = {};
+  const boxMax = {};
+  const boxN = {};
+  const handBox = {};
+  for (const side of ['left', 'right']) {
+    if (!handBones[side]) continue;
+    boxMin[side] = new THREE.Vector3(Infinity, Infinity, Infinity);
+    boxMax[side] = new THREE.Vector3(-Infinity, -Infinity, -Infinity);
+    boxN[side] = 0;
+  }
+  vrm.scene.traverse((o) => {
+    if (!o.isSkinnedMesh || !o.skeleton || !o.geometry) return;
+    const attr = o.geometry.attributes.position;
+    if (!attr || !attr.count) return;
+    const si = o.geometry.attributes.skinIndex;
+    const sw = o.geometry.attributes.skinWeight;
+    const bones = o.skeleton.bones;
+    let hasHand = false;
+    let hasTorso = false;
+    for (const b of bones) {
+      if (torsoBones.has(b)) hasTorso = true;
+      if ((handBones.left && handBones.left.has(b))
+        || (handBones.right && handBones.right.has(b))) hasHand = true;
+    }
+    for (let i = 0; i < attr.count; i++) {
+      _bodyV.fromBufferAttribute(attr, i).applyMatrix4(o.matrixWorld);
+      const t = (_bodyV.y - hips.y) / axisLen;
+      const band = (t >= 0 && t < 1)
+        ? Math.min(TORSO_PROFILE_BANDS - 1, Math.floor(t * TORSO_PROFILE_BANDS))
+        : -1;
+      if (band >= 0) {
+        const axisX = hips.x + t * (neck.x - hips.x);
+        const dx = Math.abs(_bodyV.x - axisX);
+        if (dx < TORSO_MIDLINE_HALF && _bodyV.z > frontZ[band]) frontZ[band] = _bodyV.z;
+      }
+      if (!si || !sw) continue;
+      // Dominant skin joint: the bone that actually owns this vertex.
+      let ji = -1;
+      let best = -1;
+      for (let k = 0; k < 4; k++) {
+        const w = k === 0 ? sw.getX(i) : k === 1 ? sw.getY(i) : k === 2 ? sw.getZ(i) : sw.getW(i);
+        if (w > best) {
+          best = w;
+          ji = k === 0 ? si.getX(i) : k === 1 ? si.getY(i) : k === 2 ? si.getZ(i) : si.getW(i);
+        }
+      }
+      const bm = ji >= 0 ? bones[ji] : null;
+      if (!bm) continue;
+      if (hasTorso && band >= 0 && torsoBones.has(bm)) {
+        const axisX = hips.x + t * (neck.x - hips.x);
+        const dx = Math.abs(_bodyV.x - axisX);
+        if (dx > halfX[band]) halfX[band] = dx;
+        if (_bodyV.z > frontZ[band]) frontZ[band] = _bodyV.z;
+      }
+      if (!hasHand) continue;
+      for (const side of ['left', 'right']) {
+        if (!handBones[side] || !handBones[side].has(bm)) continue;
+        _bodyV2.copy(_bodyV).applyMatrix4(handInv[side]);
+        boxMin[side].min(_bodyV2);
+        boxMax[side].max(_bodyV2);
+        boxN[side] += 1;
+        if ((i % 8) === 0 && penPts[side].length < PEN_POINT_MAX) {
+          let inv = boneInv.get(bm);
+          if (!inv) {
+            inv = new THREE.Matrix4().copy(bm.matrixWorld).invert();
+            boneInv.set(bm, inv);
+          }
+          _bodyV2.copy(_bodyV).applyMatrix4(inv);
+          penPts[side].push({
+            b: bm,
+            x: +_bodyV2.x.toFixed(4),
+            y: +_bodyV2.y.toFixed(4),
+            z: +_bodyV2.z.toFixed(4),
+          });
+        }
+      }
+    }
+  });
+  // Bands the torso mesh never reaches (neck gap, etc.) would otherwise
+  // interpolate against -Infinity; carry the nearest real surface across.
+  let seen = -Infinity;
+  for (let i = 0; i < TORSO_PROFILE_BANDS; i++) {
+    if (frontZ[i] === -Infinity) frontZ[i] = seen;
+    else seen = frontZ[i];
+  }
+  seen = -Infinity;
+  for (let i = TORSO_PROFILE_BANDS - 1; i >= 0; i--) {
+    if (frontZ[i] === -Infinity) frontZ[i] = seen;
+    else seen = frontZ[i];
+  }
+  if (frontZ[0] === -Infinity) return null;
+  for (const side of ['left', 'right']) {
+    if (!boxN[side]) continue;
+    handBox[side] = {
+      c: boxMin[side].clone().add(boxMax[side]).multiplyScalar(0.5),
+      h: boxMax[side].clone().sub(boxMin[side]).multiplyScalar(0.5),
+    };
+  }
+  return { profile: { hipsY: hips.y, axisLen, hipsX: hips.x, neckX: neck.x, frontZ, halfX }, handBox, penPts };
+};
+
+// Forward torso surface (world Z) at a world height, or null when the point
+// is off the torso, where the capsule still owns the constraint.
+// Scratch for torsoSurfaceAt: called twice a frame, so no allocation.
+const _surf = { front: 0, halfX: 0, axisX: 0, span: 0 };
+// The frontmost torso point and the torso half-width across the hand's whole
+// vertical span, plus the spine axis' lateral position at the wrist height.
+// Returns null when the wrist is off the torso (legs/head), where the
+// capsule owns the constraint.
+const torsoSurfaceAt = (prof, y) => {
+  if (!prof || !prof.frontZ || !prof.frontZ.length) return null;
+  const n = prof.frontZ.length;
+  if (n < 2) return null;
+  let front = -Infinity;
+  let halfX = 0;
+  let tMax = -1;
+  for (let s = 0; s < HAND_SPAN_SAMPLES; s++) {
+    const k = s / (HAND_SPAN_SAMPLES - 1);
+    const yy = y - HAND_SPAN_DOWN + k * (HAND_SPAN_DOWN + HAND_SPAN_UP);
+    const t = (yy - prof.hipsY) / prof.axisLen;
+    if (!(t >= 0 && t <= 1)) continue;
+    const f = t * (n - 1);
+    const i = Math.min(n - 2, Math.floor(f));
+    const j = f - i;
+    const fz = prof.frontZ[i] * (1 - j) + prof.frontZ[i + 1] * j;
+    if (fz > front) front = fz;
+    const hx = prof.halfX[i] * (1 - j) + prof.halfX[i + 1] * j;
+    if (hx > halfX) halfX = hx;
+    if (t > tMax) tMax = t;
+  }
+  if (front === -Infinity) return null;
+  const t0 = Math.min(1, Math.max(0, (y - prof.hipsY) / prof.axisLen));
+  _surf.front = front;
+  _surf.halfX = halfX;
+  _surf.axisX = prof.hipsX + t0 * (prof.neckX - prof.hipsX);
+  _surf.span = tMax;
+  return _surf;
+};
+
+// How far the hand's real mesh reaches BEHIND the wrist (world -Z) right now.
+// Built from the posed palm vertices and the posed finger joints, so it tracks
+// the actual hand: a rest-pose bounding box cannot, because its splayed
+// fingers over-estimate the across extent by ~2x and shove the hand a hand's
+// width clear of the chest.
+const handBackExtent = (st, side) => {
+  const hand = st.bones && st.bones[side + 'Hand'];
+  if (!hand) return 0;
+  hand.node.updateWorldMatrix(true, true);
+  _handM.copy(hand.node.matrixWorld);
+  hand.node.getWorldPosition(_handV);
+  const wristZ = _handV.z;
+  let back = 0;
+  const pts = st.penPts && st.penPts[side];
+  if (pts) {
+    for (let i = 0; i < pts.length; i++) {
+      const p = pts[i];
+      // Palm vertices are rigid to the hand bone, so this is exact.
+      if (p.b !== hand.node) continue;
+      _handV.set(p.x, p.y, p.z).applyMatrix4(_handM);
+      const d = wristZ - _handV.z;
+      if (d > back) back = d;
+    }
+  }
+  hand.node.traverse((o) => {
+    if (!o.isBone || o === hand.node) return;
+    o.getWorldPosition(_handV);
+    const d = wristZ - _handV.z + FINGER_TIP_MARGIN;
+    if (d > back) back = d;
+  });
+  return Math.max(0, Math.min(back, HAND_BACK_MAX));
+};
+
+// Signing-space calibration (M6 fix): source videos frame the signer
+// differently (waist-level vs chest-level), so absolute image coords
+// reproduce the wrong height on the avatar. Height (Y) and depth (Z) are
+// therefore calibrated per clip from the wrist trajectory bbox. Min-span
+// guarded: a static hold maps mid-box rather than amplifying jitter into
+// full-box swings.
+//
+// The LATERAL axis (X) must NOT be calibrated per clip. Stretching a clip's
+// own x-range across the box turns a compact pose into a full-width one: the
+// namaste clip's wrists sit in a ~0.14-wide band near the centre, which the
+// per-clip map blew out to +-0.275 m so the hands could never meet (closest
+// approach 0.36 m). X uses a FIXED reference span and the image centre so
+// absolute hand separation is preserved.
+const CALIB_X_SPAN = 0.35;
+// Vertical: same trap as the lateral axis, one dimension over. A compact
+// hold (the namaste's wrists span only ~0.175 image-y) was being stretched
+// across the whole 0.7 m box, i.e. ~4x gain, which parked the joined hands
+// at chin height. Floor the span so gain never exceeds ~2x; wide clips
+// (>=0.35 image-y) keep their own span and are untouched.
+const CALIB_MIN_SPAN_Y = 0.35;
 const CALIB_MIN_SPAN_Z = 0.05;
+
+// Lateral gain: normalized x -> metres of lateral offset from the body midline.
+const LAT_GAIN = 0.55;
+// Contact assist: when the source holds the two hands close but not quite
+// touching (namaste reads ~0.14 m apart after calibration), compress the
+// pair's lateral separation toward their own midpoint so the palms actually
+// meet. Ramped from CLASP_THRESHOLD (no effect) to CLASP_FULL (max), so
+// shoulder-width and wider poses are left untouched.
+const CLASP_THRESHOLD = 0.3;
+const CLASP_FULL = 0.13;
+const CLASP_MIN_SCALE = 0.35;
 
 function calibrateSigningSpace(dataset) {
   const xs = [];
@@ -128,8 +414,6 @@ function calibrateSigningSpace(dataset) {
     const s = [...arr].sort((a, b) => a - b);
     return s[Math.min(s.length - 1, Math.floor(q * s.length))];
   };
-  const minX = pct(xs, 0.02);
-  const maxX = pct(xs, 0.98);
   const minY = pct(ys, 0.02);
   const maxY = pct(ys, 0.98);
   const minZ = pct(zs, 0.02);
@@ -139,8 +423,10 @@ function calibrateSigningSpace(dataset) {
     const mid = (lo + hi) / 2;
     return [mid - span / 2, span];
   };
-  const [x0, spanX] = fit(minX, maxX, CALIB_MIN_SPAN_XY);
-  const [y0, spanY] = fit(minY, maxY, CALIB_MIN_SPAN_XY);
+  // Lateral: fixed span centred on the image, so a compact pose stays compact.
+  const x0 = 0.5 - CALIB_X_SPAN / 2;
+  const spanX = CALIB_X_SPAN;
+  const [y0, spanY] = fit(minY, maxY, CALIB_MIN_SPAN_Y);
   const [z0, spanZ] = fit(minZ, maxZ, CALIB_MIN_SPAN_Z);
   return { minX: x0, minY: y0, minZ: z0, spanX, spanY, spanZ };
 }
@@ -335,6 +621,8 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           const node = rawNode(name);
           if (!node) continue;
           const restLocal = node.quaternion.clone();
+          const restWorld = new THREE.Quaternion();
+          node.getWorldQuaternion(restWorld);
           // Reference direction for flexion mapping: child direction when
           // it is a real bone continuation; otherwise (tipless Distal
           // bones, nub end-sites) the incoming segment direction, so the
@@ -369,7 +657,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
             if (restLocalDir.lengthSq() > 1e-8) restLocalDir.normalize();
             else restLocalDir = null;
           }
-          bones[name] = { node, restLocal, restLocalDir };
+          bones[name] = { node, restLocal, restLocalDir, restWorld };
         }
       }
       // Midline torso bones (whole-body probe test: rotating hips must
@@ -397,19 +685,22 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       for (const side of ['left', 'right']) {
         const hand = bones[side + 'Hand'];
         const index = bones[side + 'IndexProximal'];
-        const middle = bones[side + 'MiddleProximal'];
-        if (!hand || !index || !middle) continue;
+        const little = bones[side + 'LittleProximal'];
+        if (!hand || !index || !little) continue;
         const o = new THREE.Vector3();
         const pi = new THREE.Vector3();
-        const pm = new THREE.Vector3();
+        const pl = new THREE.Vector3();
         hand.node.getWorldPosition(o);
         index.node.getWorldPosition(pi);
-        middle.node.getWorldPosition(pm);
-        const toIndex = pi.sub(o);
-        const toMiddle = pm.sub(o.clone());
-        if (toIndex.lengthSq() < 1e-8 || toMiddle.lengthSq() < 1e-8) continue;
+        little.node.getWorldPosition(pl);
+        // Knuckle line (index MCP -> little MCP), matching basisFromPalm.
+        // wrist -> middle MCP is near-parallel to the fingers in this rest
+        // pose, which made the palm normal noise.
+        const across = pl.clone().sub(pi);
+        const toIndex = pi.clone().sub(o);
+        if (toIndex.lengthSq() < 1e-8 || across.lengthSq() < 1e-8) continue;
         const x = toIndex.clone().normalize();
-        const z = new THREE.Vector3().crossVectors(toIndex, toMiddle);
+        const z = new THREE.Vector3().crossVectors(toIndex, across);
         if (z.lengthSq() < 1e-8) continue;
         z.normalize();
         const y = new THREE.Vector3().crossVectors(z, x).normalize();
@@ -418,7 +709,12 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         outward.y = 0;
         if (outward.lengthSq() < 1e-8) outward.set(side === 'left' ? 1 : -1, 0, 0);
         outward.normalize();
-        if (z.dot(outward) < 0) {
+        // Only correct a CLEARLY inward palm normal. In the imported rest
+        // pose the raw cross product is nearly perpendicular to `outward`
+        // (dot ~ 0), where a bare `< 0` test flips on numeric noise and
+        // silently twists one hand 180 degrees (Unity parity).
+        const inward = z.dot(outward);
+        if (inward < -0.35) {
           y.negate();
           z.negate();
           st.palmMirrored[side] = true;
@@ -571,7 +867,8 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
     };
 
     const _flexQ = new THREE.Quaternion();
-    const applyFingerBone = (entry, segDirWorld, lmB, avB, dt, maxFlex, damp = 1) => {
+    const applyFingerBone = (entry, segDirWorld, lmB, avB, dt, maxFlex, damp = 1,
+      handDelta = null) => {
       if (!entry || !entry.restLocalDir) return;
       const { node, restLocal, restLocalDir } = entry;
       if (segDirWorld.lengthSq() < 1e-12) return;
@@ -587,6 +884,13 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         .addScaledVector(avB.x, inLm.x)
         .addScaledVector(avB.y, inLm.y)
         .addScaledVector(avB.z, inLm.z);
+      // `avB` is the hand basis captured in the REST world frame, but the
+      // wrist has since been rolled by the palm mapping. Without carrying
+      // that rotation across, the finger bones are aimed in the rest frame
+      // and simply do not follow the hand: a rolled wrist left the fingers
+      // hanging ~90 deg off the new palm axis (measurable as a huge
+      // finger-joint bend with a straight source finger).
+      if (handDelta) targetWorld.applyQuaternion(handDelta);
       node.parent.updateWorldMatrix(true, false);
       const parentQ = node.parent.getWorldQuaternion(_tmpQ);
       const targetLocal = targetWorld.applyQuaternion(parentQ.invert()).normalize();
@@ -621,8 +925,9 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       // Lateral gain is narrower than vertical: the avatar's arms are
       // short relative to a full-box sweep, which read as stiff full
       // wingspans. ±0.275m lateral keeps elbows bent on wide signs.
+      const clasp = (st.claspAdj && st.claspAdj[side]) || 0;
       const target = new THREE.Vector3(
-        C.x + (w.x - 0.5) * 0.55,
+        C.x + (w.x - 0.5) * LAT_GAIN + clasp,
         C.y + 0.02 + (0.5 - w.y) * 0.7,
         Math.max(C.z + 0.3 - w.z * 0.4, C.z + 0.06),
       );
@@ -640,6 +945,30 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         target.copy(A.S).addScaledVector(toT.normalize(), dist);
       }
       if (dist < 1e-6) return;
+      // Chest-surface guard, applied AFTER the reach clamp so pulling the arm
+      // back in cannot undo it. The capsule above constrains the wrist POINT
+      // with a radius this avatar's bust exceeds by 3 cm; this constrains the
+      // whole hand box against the measured surface, so the palm stays in
+      // front of the chest instead of sinking into it. `toT` is refreshed
+      // because the pole below derives from it.
+      if (st.torsoProfile) {
+        const surf = torsoSurfaceAt(st.torsoProfile, target.y);
+        // Only over the torso: a hand out at the side is nowhere near the
+        // chest surface and must not be shoved forward.
+        if (surf && Math.abs(target.x - surf.axisX) < surf.halfX + 0.02) {
+          const back = handBackExtent(st, side);
+          const need = surf.front + HAND_CLEARANCE + back;
+          if (target.z < need) {
+            target.z = need;
+            st.viol.chest = (st.viol.chest || 0) + 1;
+            // `toT` feeds the pole AND `dist` feeds the shoulder angle, so
+            // both must be refreshed here: a stale `dist` aims the upper arm
+            // for the old target and the wrist lands short of the new one.
+            toT.copy(target).sub(A.S);
+            dist = toT.length();
+          }
+        }
+      }
       st.armTgt = { side, t: target.toArray() };
       const dirST = toT.normalize();
       const cosA = Math.min(1, Math.max(-1,
@@ -733,8 +1062,9 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       const P = (i) => lmVec(lms[i], new THREE.Vector3());
       const p0 = P(0);
       const p5 = P(5);
-      const p9 = P(9);
-      let lmB = basisFromPalm(p0, p5, p9);
+      const p17 = P(17);
+      const across = new THREE.Vector3().subVectors(p17, p5);
+      let lmB = basisFromPalm(p0, p5, across);
       // Degenerate frame (collinear finger roots): keep the LAST good
       // palm frame instead of freezing the wrist while the arm keeps
       // moving (detached/flailing look) — but only while the arm is still
@@ -759,13 +1089,45 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       } else {
         return;
       }
+      // Clasp palm roll: a landmark basis can only ever say "flat to the
+      // camera", so a palms-together pose leaves the wrists un-pronated and
+      // both palms pointing at the viewer. When the hands are clasped,
+      // override the palm normal so each palm faces the other hand.
+      let lmBWrist = lmB;
+      if (st.claspAdj) {
+        // Chirality note (measured on the imported rest pose): the basis z
+        // is the BACK-of-hand normal on the left and the PALM normal on the
+        // right, so one target direction turns both palms inward.
+        const tgt = new THREE.Vector3(1, 0, 0);
+        tgt.addScaledVector(lmB.x, -tgt.dot(lmB.x));
+        if (tgt.lengthSq() > 0.05) {
+          tgt.normalize();
+          lmBWrist = {
+            x: lmB.x.clone(),
+            y: new THREE.Vector3().crossVectors(tgt, lmB.x).normalize(),
+            z: tgt,
+          };
+        }
+      }
       const qAv = quatFromBasis(avB);
-      const qLm = quatFromBasis(lmB);
+      const qLm = quatFromBasis(lmBWrist);
       const palmDelta = qLm.multiply(qAv.invert());
 
       const handEntry = st.bones[side + 'Hand'];
-      if (handEntry) {
-        const target = palmDelta.multiply(handEntry.restLocal.clone());
+      let handDelta = null;
+      if (handEntry && handEntry.node.parent) {
+        // palmDelta is a WORLD-space rotation: rotate the hand's rest
+        // WORLD orientation, then express the result in the CURRENT parent
+        // (lower-arm) space. Applying it to the local quaternion - as
+        // before - conjugated the wrist by the arm's rotation, so once the
+        // arm was posed by IK the palm pointed the wrong way and the hands
+        // could not face each other. Parent world matrix is refreshed first.
+        handEntry.node.parent.updateWorldMatrix(true, false);
+        const parentQ = new THREE.Quaternion();
+        handEntry.node.parent.getWorldQuaternion(parentQ);
+        const target = parentQ
+          .invert()
+          .multiply(palmDelta.clone().multiply(handEntry.restWorld ?? handEntry.restLocal));
         // Angular-velocity cap: tracker basis flips read as wrist snaps
         // (a >~7 rad/s single-frame jump is never human). Clamp the step
         // instead of jumping; normal signing passes through untouched.
@@ -777,11 +1139,21 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           const step = prevQ.angleTo(target);
           if (step > maxStep) {
             st.viol.wcap = (st.viol.wcap || 0) + 1;
+            st.wristCap = st.wristCap || {};
+            st.wristCap[side] = (st.wristCap[side] || 0) + 1;
             goal = prevQ.clone().rotateTowards(target, maxStep);
           }
         }
         st.lastWristQ[side] = goal.clone();
         smoothWithDt(handEntry.node, goal, dt);
+        // The hand's ACTUAL world rotation change this frame, i.e. after the
+        // velocity cap and smoothing, so the fingers stay welded to the hand.
+        handEntry.node.updateWorldMatrix(true, false);
+        const handWorld = handEntry.node.getWorldQuaternion(new THREE.Quaternion());
+        const restWorldQ = handEntry.restWorld ?? handEntry.restLocal;
+        handDelta = restWorldQ
+          ? handWorld.multiply(restWorldQ.clone().invert())
+          : null;
       }
 
       const seg = (a, b) => {
@@ -795,7 +1167,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           const entry = st.bones[side + f.key + joints[j]];
           // Distal tips jitter most in tracking: smooth them harder.
           applyFingerBone(entry, seg(f.lm[j], f.lm[j + 1]), lmB, avB, dt,
-            FLEX_LIMITS[joints[j]], joints[j] === 'Distal' ? 0.45 : 1);
+            FLEX_LIMITS[joints[j]], joints[j] === 'Distal' ? 0.45 : 1, handDelta);
         }
       }
       for (let j = 0; j < 3; j++) {
@@ -803,7 +1175,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         const [a, b] = THUMB_SEGS[j];
         // Thumb saddle joint over-rotates: damp the metacarpal, soften tips.
         const damp = j === 0 ? 0.6 : (j === 2 ? 0.45 : 0.8);
-        applyFingerBone(entry, seg(a, b), lmB, avB, dt, FLEX_LIMITS.ThumbDefault, damp);
+        applyFingerBone(entry, seg(a, b), lmB, avB, dt, FLEX_LIMITS.ThumbDefault, damp, handDelta);
       }
     };
 
@@ -820,6 +1192,39 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         const h = String(hand.handedness || '').toLowerCase();
         if (!h.includes('left') && !h.includes('right')) continue;
         (h.includes('left') ? bySide.left : bySide.right).push(hand);
+      }
+      // Contact assist: if the source holds the two hands close, pull the
+      // pair together (toward their own midpoint, not the body) so the palms
+      // meet. Applied as a per-side lateral delta used inside applyArm.
+      st.claspAdj = null;
+      if (calib && bySide.left.length && bySide.right.length) {
+        const wl = normalizeWrist(calib, bySide.left[0].landmarks[0]);
+        const wr = normalizeWrist(calib, bySide.right[0].landmarks[0]);
+        const latL = (wl.x - 0.5) * LAT_GAIN;
+        const latR = (wr.x - 0.5) * LAT_GAIN;
+        const gap = Math.abs(latL - latR);
+        if (gap > 1e-4 && gap < CLASP_THRESHOLD) {
+          const t = Math.min(
+            1, (CLASP_THRESHOLD - gap) / (CLASP_THRESHOLD - CLASP_FULL));
+          let scale = 1 - t * (1 - CLASP_MIN_SCALE);
+          // Palms are solid: CLASP_MIN_SCALE alone could drive the pair to
+          // 1.9 cm apart when the hand is ~5 cm thick, letting the two meshes
+          // intersect. Clamp the compressed separation to the measured hand
+          // thickness so the palms can touch but never pass through, and
+          // never widen a pair that is already tighter than that.
+          const minSep = st.handMinSep || 0;
+          if (minSep > 0 && gap * scale < minSep) scale = Math.min(1, minSep / gap);
+          st.claspInfo = {
+            latL: +latL.toFixed(4), latR: +latR.toFixed(4), gap: +gap.toFixed(4),
+            t: +t.toFixed(3), scale: +scale.toFixed(3), minSep: +minSep.toFixed(4),
+            out: +(gap * scale).toFixed(4),
+          };
+          const mid = (latL + latR) / 2;
+          st.claspAdj = {
+            left: (mid - latL) * (1 - scale),
+            right: (mid - latR) * (1 - scale),
+          };
+        }
       }
       for (const side of ['left', 'right']) {
         const cands = bySide[side];
@@ -963,6 +1368,14 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           ticks: st.ticks || 0,
           loadId: st.loadId || 0,
           blend: st.blend ? +st.blend.t.toFixed(2) : -1,
+          claspAdj: st.claspAdj || null,
+          claspInfo: st.claspInfo || null,
+          avBasisZ: st.avBasis ? {
+            left: st.avBasis.left
+              ? st.avBasis.left.z.toArray().map((v) => +v.toFixed(3)) : null,
+            right: st.avBasis.right
+              ? st.avBasis.right.z.toArray().map((v) => +v.toFixed(3)) : null,
+          } : null,
           expr: st.exprCurrent
             ? [+(st.exprCurrent.surprised || 0).toFixed(2),
                +(st.exprCurrent.angry || 0).toFixed(2)]
@@ -980,6 +1393,10 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
             right: st.arm && st.arm.right ? st.arm.right.upper.node.quaternion.toArray() : null,
             chest: st.chestPos ? st.chestPos.toArray() : null,
             tgt: st.armTgt || null,
+            shoulder: st.arm && st.arm.left ? st.arm.left.S.toArray() : null,
+            lens: st.arm && st.arm.left
+              ? [+st.arm.left.lenU.toFixed(4), +st.arm.left.lenL.toFixed(4)]
+              : null,
           },
         };
       }
@@ -1028,6 +1445,28 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           /* keep the default framing */
         }
         const n = captureRestPose(vrm);
+        // Collision geometry measured from the mesh (see measureBody). Until
+        // this lands, the arm clamp falls back to the old capsule.
+        try {
+          const body = measureBody(vrm);
+          if (body) {
+            st.torsoProfile = body.profile;
+            st.handBox = body.handBox;
+            st.penPts = body.penPts;
+            let thick = 0;
+            for (const side of ['left', 'right']) {
+              const b = body.handBox[side];
+              if (!b) continue;
+              // A hand is a flat slab: its smallest half-extent is half the
+              // palm thickness, which is the distance that matters when the
+              // palms face each other.
+              thick = Math.max(thick, 2 * Math.min(b.h.x, b.h.y, b.h.z));
+            }
+            st.handMinSep = thick > 0 ? thick + HAND_CLEARANCE : 0;
+          }
+        } catch (e) {
+          st.bodyErr = String((e && e.message) || e);
+        }
         setModelReady(true);
         if (typeof window !== 'undefined') {
           window.__vrm = { loaded: true, bones: n, frames: 0, index: 0, lw: null, rw: null };
@@ -1069,6 +1508,202 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       window.__vrmShow = () => {
         if (st.vrm) st.vrm.scene.visible = true;
         return 'ok';
+      };
+      // Deterministic stepper. An occluded tab has requestAnimationFrame
+      // suspended, which freezes playback and makes playback impossible to
+      // verify headlessly. Drive the frame loop by hand with a synthetic
+      // clock instead: same code path, fixed dt. Debug/verification only.
+      const liveClip = () => {
+        if (st.dataset && st.dataset.frames && st.dataset.frames.length) return st.dataset;
+        if (st.playlist && st.playlist.length) {
+          const cur = st.playlist[st.playIndex % st.playlist.length];
+          if (cur && cur.frames && cur.frames.length) return cur;
+        }
+        return null;
+      };
+      window.__vrmAdvance = (steps = 20, dtMs = 33) => {
+        const realNow = performance.now.bind(performance);
+        let t = realNow();
+        try {
+          performance.now = () => (t += dtMs);
+        } catch {
+          /* ignore */
+        }
+        for (let i = 0; i < Math.max(1, steps); i++) tick();
+        try {
+          performance.now = realNow;
+          clock.oldTime = realNow();
+        } catch {
+          /* ignore */
+        }
+        return {
+          ticks: st.ticks || 0,
+          index: st.frameIndex,
+          playing: !!liveClip(),
+          avatar: !!st.vrm,
+        };
+      };
+      // One-shot: advance to a target clip frame, then grab the canvas.
+      // The PNG is parked on `window.__vrmShot` (download it separately so
+      // the return value stays small).
+      window.__vrmCaptureAt = (target = 22, maxSteps = 600) => {
+        let guard = 0;
+        while (guard < maxSteps) {
+          if (!liveClip()) break;
+          if (st.frameIndex >= target) break;
+          window.__vrmAdvance(1, 33);
+          guard += 1;
+        }
+        const c = st.renderer && st.renderer.domElement;
+        window.__vrmShot = c ? c.toDataURL('image/png') : null;
+        window.__vrmShotIdx = st.frameIndex;
+        return {
+          index: st.frameIndex,
+          guard,
+          palm: typeof window.__vrmPalm === 'function' ? window.__vrmPalm() : null,
+          shot: !!window.__vrmShot,
+        };
+      };
+      window.__vrmDownloadShot = (name) => {
+        if (!window.__vrmShot) return 'no-shot';
+        const a = document.createElement('a');
+        a.href = window.__vrmShot;
+        a.download = name || ('shot_' + window.__vrmShotIdx + '.png');
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        return 'ok:' + a.download;
+      };
+      // Palm-orientation probe: does the wrist actually reach its target?
+      window.__vrmPalm = () => {
+        const out = {};
+        for (const side of ['left', 'right']) {
+          const hand = st.bones[side + 'Hand'];
+          const index = st.bones[side + 'IndexProximal'];
+          const little = st.bones[side + 'LittleProximal'];
+          if (!hand || !index || !little) { out[side] = 'missing'; continue; }
+          const o = new THREE.Vector3();
+          const pi = new THREE.Vector3();
+          const pl = new THREE.Vector3();
+          hand.node.getWorldPosition(o);
+          index.node.getWorldPosition(pi);
+          little.node.getWorldPosition(pl);
+          const x = pi.clone().sub(o);
+          const m = pl.clone().sub(pi);
+          let z = null;
+          if (x.lengthSq() > 1e-8 && m.lengthSq() > 1e-8) {
+            z = new THREE.Vector3().crossVectors(x, m).normalize();
+          }
+          const rec = st.lastLmB && st.lastLmB[side];
+          const ii = st.bones[side + 'IndexIntermediate'];
+          const fseg = ii ? ii.node.getWorldPosition(new THREE.Vector3()).sub(pi) : null;
+          out[side] = {
+            pos: o.toArray().map((v) => +v.toFixed(3)),
+            normal: z ? z.toArray().map((v) => +v.toFixed(2)) : null,
+            finger: x.clone().normalize().toArray().map((v) => +v.toFixed(2)),
+            fingerT: rec ? rec.b.x.toArray().map((v) => +v.toFixed(2)) : null,
+            // How far the first finger joint is bent away from the hand's
+            // finger axis. Source data says ~15-25 deg for this clip; a
+            // near-90 deg reading means the finger bones are being driven
+            // somewhere the landmarks never asked for.
+            bend: (fseg && x.lengthSq() > 1e-8)
+              ? +THREE.MathUtils.radToDeg(fseg.clone().normalize()
+                  .angleTo(x.clone().normalize())).toFixed(1) : null,
+            errDeg: (z && rec) ? +THREE.MathUtils.radToDeg(z.angleTo(rec.b.z)).toFixed(1) : null,
+            fErr: (rec && x.lengthSq() > 1e-8)
+              ? +THREE.MathUtils.radToDeg(x.clone().normalize().angleTo(rec.b.x)).toFixed(1) : null,
+            cap: (st.wristCap && st.wristCap[side]) || 0,
+            clasp: !!st.claspAdj,
+          };
+        }
+        return JSON.stringify(out);
+      };
+      // Chest-penetration probe: the whole point of the torso-profile guard is
+      // that no part of a hand sits inside the torso, so report the measured
+      // surface, how far back the hand box reaches, and the resulting
+      // intrusion (negative = clear of the body).
+      window.__vrmBody = () => {
+        const prof = st.torsoProfile;
+        const out = {};
+        for (const side of ['left', 'right']) {
+          const hand = st.bones[side + 'Hand'];
+          if (!hand) { out[side] = 'missing'; continue; }
+          const o = hand.node.getWorldPosition(new THREE.Vector3());
+          const back = handBackExtent(st, side);
+          const surf = prof ? torsoSurfaceAt(prof, o.y) : null;
+          const rear = o.z - back;
+          const overTorso = surf
+            ? Math.abs(o.x - surf.axisX) < surf.halfX + 0.02 : false;
+          out[side] = {
+            wrist: o.toArray().map((v) => +v.toFixed(3)),
+            back: +back.toFixed(4),
+            overTorso,
+            chestFrontZ: surf ? +surf.front.toFixed(3) : null,
+            torsoHalfX: surf ? +surf.halfX.toFixed(3) : null,
+            handRearZ: +rear.toFixed(3),
+            // > 0 means the back of the hand is behind the chest surface,
+            // i.e. the torso mesh is drawing over the hand. Negative = clear.
+            intrusion: (surf && overTorso) ? +(surf.front - rear).toFixed(4) : null,
+            minSep: st.handMinSep ?? null,
+          };
+        }
+        const lh = st.bones.leftHand && st.bones.leftHand.node;
+        const rh = st.bones.rightHand && st.bones.rightHand.node;
+        if (lh && rh) {
+          const a = lh.getWorldPosition(new THREE.Vector3());
+          const b = rh.getWorldPosition(new THREE.Vector3());
+          out.handGapX = +Math.abs(a.x - b.x).toFixed(4);
+        }
+        out.profile = prof ? {
+          hipsY: +prof.hipsY.toFixed(3),
+          axisLen: +prof.axisLen.toFixed(3),
+          frontZ: Array.from(prof.frontZ).map((v) => +v.toFixed(3)),
+          halfX: Array.from(prof.halfX).map((v) => +v.toFixed(3)),
+        } : null;
+        out.err = st.bodyErr || null;
+        return JSON.stringify(out);
+      };
+      // Ground truth for "the hand sinks into the chest": transform the
+      // actual palm vertices (rigidly bound to the hand bone) into world
+      // space and test each one against the measured torso surface. `inside`
+      // is how many palm vertices the torso mesh is drawn over; `deepest` is
+      // the worst intrusion in metres.
+      window.__vrmPen = () => {
+        const prof = st.torsoProfile;
+        if (!st.penPts || !prof) return JSON.stringify({ err: 'no-profile' });
+        const out = {};
+        const v = new THREE.Vector3();
+        for (const side of ['left', 'right']) {
+          const pts = st.penPts[side];
+          if (!pts || !pts.length) { out[side] = 'n/a'; continue; }
+          const n = prof.frontZ.length;
+          let inside = 0;
+          let deepest = 0;
+          let badPt = null;
+          for (let i = 0; i < pts.length; i++) {
+            const p = pts[i];
+            v.set(p.x, p.y, p.z).applyMatrix4(p.b.matrixWorld);
+            const t = (v.y - prof.hipsY) / prof.axisLen;
+            if (t < 0 || t > 1) continue;
+            const f = t * (n - 1);
+            const bi = Math.min(n - 2, Math.max(0, Math.floor(f)));
+            const bk = f - bi;
+            const hx = prof.halfX[bi] * (1 - bk) + prof.halfX[bi + 1] * bk;
+            const axisX = prof.hipsX + t * (prof.neckX - prof.hipsX);
+            if (Math.abs(v.x - axisX) > hx) continue;
+            const fz = prof.frontZ[bi] * (1 - bk) + prof.frontZ[bi + 1] * bk;
+            if (v.z < fz) {
+              inside += 1;
+              const d = fz - v.z;
+              if (d > deepest) {
+                deepest = d;
+                badPt = [+v.x.toFixed(3), +v.y.toFixed(3), +v.z.toFixed(3)];
+              }
+            }
+          }
+          out[side] = { pts: pts.length, inside, deepest: +deepest.toFixed(4), badPt };
+        }
+        return JSON.stringify(out);
       };
       // Binding audit: is the bone we animate the bone the mesh uses?
       window.__vrmBoneInfo = (name) => {

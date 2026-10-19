@@ -73,3 +73,9 @@ Thumbs.db
 
 # Local run logs
 *.log
+
+# Local verification artifacts (Unity probe results, scene backups, reports)
+/sign_results*.xml
+/probe_results.xml
+/scene_backup_check.unity
+/ISL-3D Avatar/*_report.txt
