@@ -60,7 +60,7 @@ def test_composed_marks_unsupported_never_substitutes(monkeypatch):
     import asyncio
     import retrieval
 
-    entries = {"YOU": _entry("YOU"),
+    entries = {"YOU": _entry("YOU", landmark_clip="gloss_you.json"),
                "LET": _entry("LET", clip=False),  # corpus ref only: unplayable
                "ZZZ": None}  # unknown entirely
     import clip_store

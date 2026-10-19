@@ -44,19 +44,29 @@ def test_junk_glosses_skipped(tmp_path):
     gloss_lookup.reset_vocabulary_state()
 
 
-def test_suggest_glosses_playable_only():
+def test_suggest_glosses_playable_only(monkeypatch):
     import gloss_lookup
     from retrieval import suggest_glosses
 
     gloss_lookup.reset_vocabulary_state()
     gloss_lookup._landmark_uids = set()
+
+    # Stub the registry: THANK is landmark-backed (suggestable); anything
+    # clip-only must never be suggested (the avatar could not perform it).
+    import animation_resolver
+    real_resolve = animation_resolver.resolve_gloss_token
+
+    def fake_resolve(token, registry=None):
+        entry = real_resolve(token, registry=registry)
+        if entry is not None and token.lower() == "thank":
+            entry["landmark_clip_url"] = "/landmarks/gloss_thank.json"
+        return entry
+
+    monkeypatch.setattr(animation_resolver, "resolve_gloss_token", fake_resolve)
     assert suggest_glosses("THANKK") == ["THANK"]
     assert suggest_glosses("HI") == []  # too short: no guesses
     assert suggest_glosses("AND") == []  # function word: no guesses
     assert suggest_glosses("OF") == []
-    assert suggest_glosses("ZZZNOTREAL") == [] or all(
-        isinstance(s, str) for s in suggest_glosses("ZZZNOTREAL")
-    )
     gloss_lookup.reset_vocabulary_state()
 
 

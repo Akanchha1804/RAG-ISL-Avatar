@@ -68,14 +68,17 @@ async def phrase_matches(canonical_tokens: list, top_n: int = 3) -> tuple[list, 
 
 
 def _playable(entry: dict | None) -> bool:
-    """A token is playable when a clip or per-token landmark exists.
+    """A token is motion-playable when a landmark resource exists.
 
-    A sentence-level landmark_file reference alone does NOT count: it
-    points at a whole other sentence's motion, not this sign.
+    Only landmark data drives the avatar (web VRM mapper and the Unity
+    HandPoseMapper both consume landmark JSON). A CISLR MP4 (clip_url) is
+    reference footage only: neither mapper can play it, so a clip WITHOUT
+    a landmark is reported unsupported, never silently skipped. Claiming
+    otherwise would overstate Unity motion coverage.
     """
     if not entry:
         return False
-    return bool(entry.get("clip_url") or entry.get("landmark_clip_url"))
+    return bool(entry.get("landmark_clip_url"))
 
 
 def suggest_glosses(token: str, top_n: int = 3) -> list:
