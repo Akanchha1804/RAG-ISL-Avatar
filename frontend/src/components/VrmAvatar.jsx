@@ -4,6 +4,13 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VRMLoaderPlugin } from '@pixiv/three-vrm';
 import { apiUrl } from '../config';
 
+// Test/debug hooks (`HOOKS.__vrm`, `__vrmAdvance`, `__vrmPen`, `__vrmShot`,
+// ...) let the retargeting be asserted from a browser: scene state, cross
+// checks, stepped playback and screenshots. They are attached only in dev
+// builds, so a production bundle exposes nothing on `window` and skips the
+// per-frame debug object entirely.
+const HOOKS = import.meta.env.DEV ? globalThis : Object.create(null);
+
 // MediaPipe hand landmark indices (wrist, then 4 joints per finger).
 const FINGERS = [
   { key: 'Index', lm: [5, 6, 7, 8] },
@@ -395,6 +402,30 @@ const CLASP_THRESHOLD = 0.3;
 const CLASP_FULL = 0.13;
 const CLASP_MIN_SCALE = 0.35;
 
+// Hand-to-arm assignment. The tracker's per-frame handedness label is not
+// trustworthy on the shipped gloss clips: it flips mid-clip (140 of 184
+// clips, 536 flips) and one physical hand is reported twice often enough to
+// matter (114 of 184 clips). Grouping BY THE LABEL therefore drove the wrong
+// arm across the body on a flip, and two detections of one hand fought over
+// a single arm - the overlapping hands and the sign hopping between arms in
+// composed playback. Detections are now clustered, then assigned to an arm
+// by continuity with that arm's previous wrist; lateral position is only the
+// fallback for a hand with no history yet (first frame of a clip).
+const HAND_MERGE_DIST = 0.05;
+const SIDE_SWITCH_HYST = 0.06;
+
+// Idle arm pose. The model's rest pose is a T-pose, so a side with no
+// landmarks (or the neutral a clip switch blends through) left at rest reads
+// as a broken mannequin with one arm straight out. buildNeutralPose drives
+// the same two-bone IK to a wrist target beside the body once at load and
+// keeps the resulting quaternions. DROP/FWD are fractions of the arm length;
+// LATERAL is the wrist's outward offset from the shoulder.
+const IDLE_LATERAL = 0.1;
+const IDLE_DROP = 0.8;
+const IDLE_FWD = 0.12;
+// Load-time convergence budget for the idle solve (per side, at 60 Hz).
+const IDLE_SETTLE_STEPS = 240;
+
 function calibrateSigningSpace(dataset) {
   const xs = [];
   const ys = [];
@@ -509,7 +540,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
     exprTarget: { surprised: 0, angry: 0 },
     exprCurrent: { surprised: 0, angry: 0 },
     // Joint-safety violation counters (headless proof the fixes engage).
-    viol: { curl: 0, elbow: 0, torso: 0, skipped: 0, dup: 0, wcap: 0 },
+    viol: { curl: 0, elbow: 0, torso: 0, skipped: 0, dup: 0, wcap: 0, sideHold: 0 },
   });
 
   // Non-manual targets follow the gloss sequence (derived, never set in
@@ -828,6 +859,14 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       }
       st.blend = { t: 0, pose, viaRest };
     };
+    // Neutral pose for a bone: the arms-down idle for the arm bones (built
+    // once at load, see buildNeutralPose), the model rest pose for everything
+    // else. Blending a clip switch to the rest pose popped the arms out to a
+    // full T-pose between every gloss of a composed sentence.
+    const neutralFor = (key, entry) => (
+      (st.neutral && st.neutral[key]) || entry.restLocal
+    );
+
     const updateBlend = (dt) => {
       const b = st.blend;
       if (!b || st.probe) return;
@@ -849,18 +888,19 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         }
         return;
       }
-      // Clip switch: first half -> rest, second half rest -> live.
+      // Clip switch: first half -> neutral, second half neutral -> live.
       const half = x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2;
       for (const key of Object.keys(b.pose)) {
         const entry = st.bones[key];
         if (!entry || !entry.node || !entry.restLocal) continue;
+        const neutral = neutralFor(key, entry);
         if (x >= 1) continue;
         if (x < 0.5) {
           entry.node.quaternion.slerpQuaternions(
-            b.pose[key], entry.restLocal, half);
+            b.pose[key], neutral, half);
         } else {
           entry.node.quaternion.slerpQuaternions(
-            entry.restLocal, entry.node.quaternion.clone(), half);
+            neutral, entry.node.quaternion.clone(), half);
         }
       }
       if (x >= 1) st.blend = null;
@@ -917,20 +957,10 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
     // adaptive pole (no flips on cross-body targets), torso-capsule
     // collision (no hands inside the chest), elbow hinge clamp (no
     // hyperextension), twist-locked upper arm (no free roll).
-    const applyArm = (side, wristRaw, dt, calib) => {
+    const applyArmAt = (side, target, dt) => {
       const A = st.arm && st.arm[side];
       const C = st.chestPos;
       if (!A || !C) return;
-      const w = normalizeWrist(calib, wristRaw);
-      // Lateral gain is narrower than vertical: the avatar's arms are
-      // short relative to a full-box sweep, which read as stiff full
-      // wingspans. ±0.275m lateral keeps elbows bent on wide signs.
-      const clasp = (st.claspAdj && st.claspAdj[side]) || 0;
-      const target = new THREE.Vector3(
-        C.x + (w.x - 0.5) * LAT_GAIN + clasp,
-        C.y + 0.02 + (0.5 - w.y) * 0.7,
-        Math.max(C.z + 0.3 - w.z * 0.4, C.z + 0.06),
-      );
       // Torso collision: the signing box overlaps the chest volume, so
       // clamp the wrist target outside the torso capsule (+3cm standoff).
       if (st.torsoHips && st.torsoNeck) {
@@ -1049,6 +1079,88 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         .setFromUnitVectors(A.restDirL, foreDir).multiply(A.restWQL);
       smoothWithDt(A.lower.node, parentQL.invert().multiply(qL), dt);
     };
+
+    // Map a landmark wrist through the signing box and hand it to the IK.
+    const applyArm = (side, wristRaw, dt, calib) => {
+      const C = st.chestPos;
+      if (!C) return;
+      const w = normalizeWrist(calib, wristRaw);
+      // Lateral gain is narrower than vertical: the avatar's arms are
+      // short relative to a full-box sweep, which read as stiff full
+      // wingspans. ±0.275m lateral keeps elbows bent on wide signs.
+      const clasp = (st.claspAdj && st.claspAdj[side]) || 0;
+      const target = new THREE.Vector3(
+        C.x + (w.x - 0.5) * LAT_GAIN + clasp,
+        C.y + 0.02 + (0.5 - w.y) * 0.7,
+        Math.max(C.z + 0.3 - w.z * 0.4, C.z + 0.06),
+      );
+      applyArmAt(side, target, dt);
+    };
+
+    // Where a signer's hand rests between signs: hanging just outside and
+    // below the shoulder. Expressed against this arm's own length so the
+    // idle stays sane if the model is ever swapped.
+    const idleWristTarget = (side) => {
+      const A = st.arm && st.arm[side];
+      if (!A) return null;
+      const L = A.lenU + A.lenL;
+      const s = side === 'left' ? 1 : -1;
+      return new THREE.Vector3(
+        A.S.x + s * IDLE_LATERAL * L,
+        A.S.y - IDLE_DROP * L,
+        A.S.z + IDLE_FWD * L,
+      );
+    };
+
+    // Relax one arm to the idle pose: used for a side with no landmarks this
+    // frame. Freezing it wherever the previous clip left it stranded a hand
+    // in mid-air - and, when the labels churned, on top of the signing hand.
+    const relaxArm = (side, dt) => {
+      const A = st.arm && st.arm[side];
+      const idle = st.idle && st.idle[side];
+      if (!A || !idle) return;
+      smoothWithDt(A.upper.node, idle.upper, dt);
+      smoothWithDt(A.lower.node, idle.lower, dt);
+      const hand = st.bones[side + 'Hand'];
+      if (hand) smoothWithDt(hand.node, hand.restLocal, dt, 0.6);
+      for (const f of FINGERS) {
+        for (const j of ['Proximal', 'Intermediate', 'Distal']) {
+          const e = st.bones[side + f.key + j];
+          if (e) smoothWithDt(e.node, e.restLocal, dt, 0.4);
+        }
+      }
+      for (const j of THUMB_BONES) {
+        const e = st.bones[side + 'Thumb' + j];
+        if (e) smoothWithDt(e.node, e.restLocal, dt, 0.4);
+      }
+    };
+
+    // Solve the arms-down idle once, through the same IK the signs use, so it
+    // obeys the capsule/chest clamps and the reach limit instead of fighting
+    // them. Iterating the smoothed IK to convergence is the cheapest way to
+    // get a pose that cannot disagree with the live one.
+    const buildNeutralPose = () => {
+      if (!st.arm || !st.chestPos) return;
+      const idle = {};
+      const neutral = {};
+      for (const side of ['left', 'right']) {
+        const A = st.arm[side];
+        const target = idleWristTarget(side);
+        if (!A || !target) continue;
+        for (let i = 0; i < IDLE_SETTLE_STEPS; i += 1) {
+          applyArmAt(side, target, 1 / 60);
+        }
+        idle[side] = {
+          upper: A.upper.node.quaternion.clone(),
+          lower: A.lower.node.quaternion.clone(),
+        };
+        neutral[side + 'UpperArm'] = idle[side].upper;
+        neutral[side + 'LowerArm'] = idle[side].lower;
+      }
+      st.idle = idle;
+      st.neutral = neutral;
+    };
+
     const _DOWN = new THREE.Vector3(0, -1, 0);
 
     const applyHand = (hand, isLeft, dt, calib) => {
@@ -1181,25 +1293,101 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
 
     const applyFrame = (frame, dt, calib) => {
       if (!frame || !Array.isArray(frame.hands)) return;
-      // At most ONE hand per side per frame: tracker mislabels put two
-      // same-side hands in a frame (190/288 clips affected), and driving
-      // both double-drives one arm (last-wins flicker + starved side).
-      // Keep the wrist nearest that side's previous wrist; count the rest.
-      st.lastWrist = st.lastWrist || {};
-      const bySide = { left: [], right: [] };
+      // Cluster the frame's detections first: the tracker reports one
+      // physical hand twice often enough to matter (114 of 184 shipped
+      // clips), and two copies drive two arms that then occupy the same
+      // space.
+      const clusters = [];
       for (const hand of frame.hands) {
         if (!hand || !Array.isArray(hand.landmarks) || hand.landmarks.length !== 21) continue;
-        const h = String(hand.handedness || '').toLowerCase();
-        if (!h.includes('left') && !h.includes('right')) continue;
-        (h.includes('left') ? bySide.left : bySide.right).push(hand);
+        const w = hand.landmarks[0];
+        let near = -1;
+        for (let i = 0; i < clusters.length; i += 1) {
+          const p = clusters[i].landmarks[0];
+          if (Math.hypot(w.x - p.x, w.y - p.y) < HAND_MERGE_DIST) { near = i; break; }
+        }
+        if (near < 0) {
+          clusters.push(hand);
+        } else {
+          // One hand seen twice: keep the more confident detection.
+          st.viol.dup += 1;
+          if ((hand.handedness_score || 0) > (clusters[near].handedness_score || 0)) {
+            clusters[near] = hand;
+          }
+        }
+      }
+      // Assign clusters to arms by CONTINUITY - the arm whose previous wrist
+      // is nearest keeps the hand - never by the per-frame handedness label,
+      // which flips mid-clip and would swap the signing arm mid-sign. Lateral
+      // position is only the fallback for an arm with no history yet.
+      st.lastWrist = st.lastWrist || {};
+      const wristCost = (hand, side) => {
+        const prev = st.lastWrist[side];
+        if (!prev) return 0.5;
+        const w = hand.landmarks[0];
+        return Math.hypot(w.x - prev.x, w.y - prev.y);
+      };
+      const assign = [];
+      if (clusters.length === 0) {
+        // Sparse frame: no usable detection. Relax both arms rather than
+        // leaving a stale pose (and never fall through to the pairing code).
+        st.claspAdj = null;
+        st.claspInfo = null;
+        relaxArm('left', dt);
+        relaxArm('right', dt);
+        st.lastAssign = { clusters: 0, sides: [], relaxed: ['left', 'right'] };
+        return;
+      }
+      if (clusters.length === 1) {
+        const hand = clusters[0];
+        const cl = wristCost(hand, 'left');
+        const cr = wristCost(hand, 'right');
+        let side;
+        if (cl === cr) {
+          // No history on either arm: image-left is the signer's right hand,
+          // which is the avatar's right arm.
+          side = hand.landmarks[0].x > 0.5 ? 'left' : 'right';
+        } else {
+          side = cl < cr ? 'left' : 'right';
+          const other = side === 'left' ? 'right' : 'left';
+          if (st.lastSingleSide === other
+            && Math.max(cl, cr) - Math.min(cl, cr) < SIDE_SWITCH_HYST) {
+            side = other;
+            st.viol.sideHold += 1;
+          }
+        }
+        st.lastSingleSide = side;
+        assign.push([hand, side]);
+      } else {
+        // Two or more distinct hands: keep the two most confident and pick
+        // the pairing (or its swap) with the lower total cost. A tie means
+        // neither arm has history, and the lateral rule breaks it.
+        if (clusters.length > 2) st.viol.dup += clusters.length - 2;
+        const top = clusters
+          .slice()
+          .sort((a, b) => (b.handedness_score || 0) - (a.handedness_score || 0))
+          .slice(0, 2)
+          .sort((a, b) => a.landmarks[0].x - b.landmarks[0].x);
+        const [leftMost, rightMost] = top;
+        const straight = wristCost(leftMost, 'right') + wristCost(rightMost, 'left');
+        const crossed = wristCost(leftMost, 'left') + wristCost(rightMost, 'right');
+        if (straight <= crossed) {
+          assign.push([leftMost, 'right'], [rightMost, 'left']);
+        } else {
+          assign.push([leftMost, 'left'], [rightMost, 'right']);
+        }
+        st.lastSingleSide = null;
       }
       // Contact assist: if the source holds the two hands close, pull the
       // pair together (toward their own midpoint, not the body) so the palms
       // meet. Applied as a per-side lateral delta used inside applyArm.
       st.claspAdj = null;
-      if (calib && bySide.left.length && bySide.right.length) {
-        const wl = normalizeWrist(calib, bySide.left[0].landmarks[0]);
-        const wr = normalizeWrist(calib, bySide.right[0].landmarks[0]);
+      st.claspInfo = null;
+      const wrist = {};
+      for (const [hand, side] of assign) wrist[side] = hand.landmarks[0];
+      if (calib && wrist.left && wrist.right) {
+        const wl = normalizeWrist(calib, wrist.left);
+        const wr = normalizeWrist(calib, wrist.right);
         const latL = (wl.x - 0.5) * LAT_GAIN;
         const latR = (wr.x - 0.5) * LAT_GAIN;
         const gap = Math.abs(latL - latR);
@@ -1226,30 +1414,25 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           };
         }
       }
-      for (const side of ['left', 'right']) {
-        const cands = bySide[side];
-        if (cands.length === 0) continue;
-        let pick = cands[0];
-        if (cands.length > 1) {
-          st.viol.dup = (st.viol.dup || 0) + (cands.length - 1);
-          const prev = st.lastWrist[side];
-          if (prev) {
-            let best = Infinity;
-            for (const c of cands) {
-              const w = c.landmarks[0];
-              const d = (w.x - prev.x) ** 2 + (w.y - prev.y) ** 2 + (w.z - prev.z) ** 2;
-              if (d < best) { best = d; pick = c; }
-            }
-          }
-        }
-        const w0 = pick.landmarks[0];
+      for (const [hand, side] of assign) {
+        const w0 = hand.landmarks[0];
         st.lastWrist[side] = { x: w0.x, y: w0.y, z: w0.z };
         try {
-          applyHand(pick, side === 'left', dt, calib);
+          applyHand(hand, side === 'left', dt, calib);
         } catch {
           /* never let one bad frame kill playback */
         }
       }
+      // A side with nothing this frame relaxes to the arms-down idle instead
+      // of freezing wherever the last clip left it.
+      for (const side of ['left', 'right']) {
+        if (!wrist[side]) relaxArm(side, dt);
+      }
+      st.lastAssign = {
+        clusters: clusters.length,
+        sides: assign.map((pair) => pair[1]),
+        relaxed: ['left', 'right'].filter((sd) => !wrist[sd]),
+      };
     };
 
     const tick = () => {
@@ -1295,14 +1478,16 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         }
         updateBlend(dt);
       } else if (!st.probe && st.resetting && st.vrm) {
-        // No sequence: relax back to the rest pose.
+        // No sequence: relax back to the neutral pose (arms down, not the
+        // model's T-pose rest).
         const t = 1 - Math.exp(-8 * Math.max(dt, 0));
         let maxAngle = 0;
         for (const key of Object.keys(st.bones)) {
           const entry = st.bones[key];
           if (!entry) continue;
-          entry.node.quaternion.slerp(entry.restLocal, t);
-          const a = entry.node.quaternion.angleTo(entry.restLocal);
+          const neutral = neutralFor(key, entry);
+          entry.node.quaternion.slerp(neutral, t);
+          const a = entry.node.quaternion.angleTo(neutral);
           if (a > maxAngle) maxAngle = a;
         }
         if (maxAngle < 0.01) st.resetting = false;
@@ -1352,12 +1537,12 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       } catch (e) {
         st.renderErr = String((e && e.message) || e);
       }
-      if (typeof window !== 'undefined') {
+      if (import.meta.env.DEV) {
         const lw = st.bones['leftHand'];
         const rw = st.bones['rightHand'];
         // wrist orientations + one finger joint prove the hands move
         const rf = st.bones['rightIndexProximal'];
-        window.__vrm = {
+        HOOKS.__vrm = {
           loaded: !!st.vrm,
           bones: Object.keys(st.bones).length,
           frames: ds && ds.frames ? ds.frames.length : 0,
@@ -1381,6 +1566,18 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
                +(st.exprCurrent.angry || 0).toFixed(2)]
             : null,
           viol: st.viol || null,
+          neutral: st.neutral
+            ? { bones: Object.keys(st.neutral).length, err: st.neutralErr || null }
+            : null,
+          idle: st.idle ? {
+            upper: {
+              left: st.idle.left
+                ? st.idle.left.upper.toArray().map((v) => +v.toFixed(4)) : null,
+              right: st.idle.right
+                ? st.idle.right.upper.toArray().map((v) => +v.toFixed(4)) : null,
+            },
+          } : null,
+          assign: st.lastAssign || null,
           thumb: st.thumbOk ?? null,
           palmMirrored: st.palmMirrored || null,
           blink: st.blink ?? null,
@@ -1467,9 +1664,16 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         } catch (e) {
           st.bodyErr = String((e && e.message) || e);
         }
+        // Arms-down idle, built after the body is measured so it obeys the
+        // same collision clamps as the live pose.
+        try {
+          buildNeutralPose();
+        } catch (e) {
+          st.neutralErr = String((e && e.message) || e);
+        }
         setModelReady(true);
         if (typeof window !== 'undefined') {
-          window.__vrm = { loaded: true, bones: n, frames: 0, index: 0, lw: null, rw: null };
+          HOOKS.__vrm = { loaded: true, bones: n, frames: 0, index: 0, lw: null, rw: null };
         }
       } catch (e) {
         fail(`Avatar failed to load: ${e && e.message ? e.message : e}`);
@@ -1481,7 +1685,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
     // Test probe: pose one bone directly (playback freezes while a
     // probe is set, so the probed bone holds still for inspection).
     if (typeof window !== 'undefined') {
-      window.__vrmProbe = (name, x, y, z, w) => {
+      HOOKS.__vrmProbe = (name, x, y, z, w) => {
         const entry = st.bones[name];
         if (!entry) return `no-bone:${name}:have=${Object.keys(st.bones).length}`;
         entry.node.quaternion.set(x, y, z, w);
@@ -1489,7 +1693,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         st.probe = { entry, q: new THREE.Quaternion(x, y, z, w) };
         return `ok:${name}:now=${entry.node.quaternion.toArray().map((v) => Number(v).toFixed(4)).join(',')}`;
       };
-      window.__vrmUnprobe = () => {
+      HOOKS.__vrmUnprobe = () => {
         st.probe = null;
         // Re-arm the ease-back so the avatar relaxes to rest instead of
         // freezing in the probed pose.
@@ -1497,15 +1701,15 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         return 'ok';
       };
       // Scene probes: verify screenshots reflect live rendering.
-      window.__vrmBg = (hex) => {
+      HOOKS.__vrmBg = (hex) => {
         st.scene.background.set(hex);
         return 'ok';
       };
-      window.__vrmHide = () => {
+      HOOKS.__vrmHide = () => {
         if (st.vrm) st.vrm.scene.visible = false;
         return 'ok';
       };
-      window.__vrmShow = () => {
+      HOOKS.__vrmShow = () => {
         if (st.vrm) st.vrm.scene.visible = true;
         return 'ok';
       };
@@ -1521,7 +1725,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         }
         return null;
       };
-      window.__vrmAdvance = (steps = 20, dtMs = 33) => {
+      HOOKS.__vrmAdvance = (steps = 20, dtMs = 33) => {
         const realNow = performance.now.bind(performance);
         let t = realNow();
         try {
@@ -1544,38 +1748,38 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         };
       };
       // One-shot: advance to a target clip frame, then grab the canvas.
-      // The PNG is parked on `window.__vrmShot` (download it separately so
+      // The PNG is parked on `HOOKS.__vrmShot` (download it separately so
       // the return value stays small).
-      window.__vrmCaptureAt = (target = 22, maxSteps = 600) => {
+      HOOKS.__vrmCaptureAt = (target = 22, maxSteps = 600) => {
         let guard = 0;
         while (guard < maxSteps) {
           if (!liveClip()) break;
           if (st.frameIndex >= target) break;
-          window.__vrmAdvance(1, 33);
+          HOOKS.__vrmAdvance(1, 33);
           guard += 1;
         }
         const c = st.renderer && st.renderer.domElement;
-        window.__vrmShot = c ? c.toDataURL('image/png') : null;
-        window.__vrmShotIdx = st.frameIndex;
+        HOOKS.__vrmShot = c ? c.toDataURL('image/png') : null;
+        HOOKS.__vrmShotIdx = st.frameIndex;
         return {
           index: st.frameIndex,
           guard,
-          palm: typeof window.__vrmPalm === 'function' ? window.__vrmPalm() : null,
-          shot: !!window.__vrmShot,
+          palm: typeof HOOKS.__vrmPalm === 'function' ? HOOKS.__vrmPalm() : null,
+          shot: !!HOOKS.__vrmShot,
         };
       };
-      window.__vrmDownloadShot = (name) => {
-        if (!window.__vrmShot) return 'no-shot';
+      HOOKS.__vrmDownloadShot = (name) => {
+        if (!HOOKS.__vrmShot) return 'no-shot';
         const a = document.createElement('a');
-        a.href = window.__vrmShot;
-        a.download = name || ('shot_' + window.__vrmShotIdx + '.png');
+        a.href = HOOKS.__vrmShot;
+        a.download = name || ('shot_' + HOOKS.__vrmShotIdx + '.png');
         document.body.appendChild(a);
         a.click();
         a.remove();
         return 'ok:' + a.download;
       };
       // Palm-orientation probe: does the wrist actually reach its target?
-      window.__vrmPalm = () => {
+      HOOKS.__vrmPalm = () => {
         const out = {};
         for (const side of ['left', 'right']) {
           const hand = st.bones[side + 'Hand'];
@@ -1622,7 +1826,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       // that no part of a hand sits inside the torso, so report the measured
       // surface, how far back the hand box reaches, and the resulting
       // intrusion (negative = clear of the body).
-      window.__vrmBody = () => {
+      HOOKS.__vrmBody = () => {
         const prof = st.torsoProfile;
         const out = {};
         for (const side of ['left', 'right']) {
@@ -1668,7 +1872,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       // space and test each one against the measured torso surface. `inside`
       // is how many palm vertices the torso mesh is drawn over; `deepest` is
       // the worst intrusion in metres.
-      window.__vrmPen = () => {
+      HOOKS.__vrmPen = () => {
         const prof = st.torsoProfile;
         if (!st.penPts || !prof) return JSON.stringify({ err: 'no-profile' });
         const out = {};
@@ -1706,7 +1910,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         return JSON.stringify(out);
       };
       // Binding audit: is the bone we animate the bone the mesh uses?
-      window.__vrmBoneInfo = (name) => {
+      HOOKS.__vrmBoneInfo = (name) => {
         if (!st.vrm) return 'no-vrm';
         let raw = null;
         try {
@@ -1751,6 +1955,153 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           withRaw: uses.filter((u) => u.hasRaw).map((u) => u.mesh),
           uses,
         });
+      };
+      // Batch playback audit: replay clips through the REAL retargeter and
+      // report the invariants the assignment/idle fixes must hold, so a whole
+      // corpus can be checked without watching it. Returns one row per clip:
+      //   dup        duplicate detections the clustering had to merge
+      //   sideHold   frames where hysteresis kept the arm on the hand
+      //   sides      which arm(s) the clip drove (single-hand clips: exactly 1)
+      //   singleFrames / frames
+      //   minGap     closest the two hands came (m); compare with handMinSep
+      //   relaxedDevDeg  worst upper-arm angle from the idle while relaxed
+      //   travel     wrist travel (m) - near zero means a static clip
+      HOOKS.__vrmAudit = async (urls) => {
+        const rows = [];
+        const keep = st.dataset;
+        const dt = 1 / 25;
+        for (const url of urls) {
+          let data;
+          try {
+            const res = await fetch(url, { cache: 'reload' });
+            data = await res.json();
+          } catch (e) {
+            rows.push({ clip: String(url).split('/').pop(), error: String((e && e.message) || e) });
+            continue;
+          }
+          const frames = data.frames || [];
+          const calib = calibrateSigningSpace(data);
+          st.dataset = data;
+          st.playlist = null;
+          st.blend = null;
+          st.lastWrist = {};
+          st.lastSingleSide = null;
+          const dup0 = st.viol.dup;
+          const hold0 = st.viol.sideHold;
+          let minGap = Infinity;
+          let relaxedDev = 0;
+          let travel = 0;
+          let pairs = 0;
+          let multiFrames = 0;
+          let singleFrames = 0;
+          let swaps = 0;
+          let prevSide = null;
+          const relaxRun = { left: 0, right: 0 };
+          const sidesSeen = new Set();
+          const prevPos = {};
+          for (const frame of frames) {
+            applyFrame(frame, dt, calib);
+            if (st.modelRoot) st.modelRoot.updateMatrixWorld(true);
+            const a = st.lastAssign || { sides: [], relaxed: [] };
+            if ((a.clusters | 0) >= 2) multiFrames += 1;
+            if (a.sides && a.sides.length === 1) {
+              singleFrames += 1;
+              sidesSeen.add(a.sides[0]);
+              if (prevSide && prevSide !== a.sides[0]) swaps += 1;
+              prevSide = a.sides[0];
+            }
+            const pos = {};
+            for (const side of ['left', 'right']) {
+              const e = st.bones[side + 'Hand'];
+              if (!e) continue;
+              const m = e.node.matrixWorld.elements;
+              pos[side] = { x: m[12], y: m[13], z: m[14] };
+            }
+            if (a.sides && a.sides.length === 2 && pos.left && pos.right) {
+              // Only compare two hands that are BOTH signing this frame: the
+              // signing hand passing the resting hand is not a collision.
+              pairs += 1;
+              const g = Math.hypot(
+                pos.left.x - pos.right.x,
+                pos.left.y - pos.right.y,
+                pos.left.z - pos.right.z,
+              );
+              if (g < minGap) minGap = g;
+            }
+            for (const side of ['left', 'right']) {
+              const relaxed = (a.relaxed || []).includes(side);
+              if (!relaxed) {
+                relaxRun[side] = 0;
+                continue;
+              }
+              relaxRun[side] += 1;
+              // Only judge the ease once it has had time to converge; the
+              // first frames after a hand leaves are expected to be far.
+              if (relaxRun[side] < 5) continue;
+              const A = st.arm && st.arm[side];
+              const idle = st.idle && st.idle[side];
+              if (!A || !idle) continue;
+              const deg = A.upper.node.quaternion.angleTo(idle.upper) * (180 / Math.PI);
+              if (deg > relaxedDev) relaxedDev = deg;
+            }
+            for (const side of a.sides || []) {
+              const p = pos[side];
+              if (!p) continue;
+              if (prevPos[side]) {
+                travel += Math.hypot(
+                  p.x - prevPos[side].x,
+                  p.y - prevPos[side].y,
+                  p.z - prevPos[side].z,
+                );
+              }
+              prevPos[side] = p;
+            }
+          }
+          rows.push({
+            clip: String(url).split('/').pop(),
+            frames: frames.length,
+            singleFrames,
+            multiFrames,
+            sides: Array.from(sidesSeen).join('+'),
+            swaps,
+            pairs,
+            minGap: Number.isFinite(minGap) ? +minGap.toFixed(4) : null,
+            relaxedDevDeg: +relaxedDev.toFixed(1),
+            travel: +travel.toFixed(3),
+            dup: st.viol.dup - dup0,
+            sideHold: st.viol.sideHold - hold0,
+          });
+        }
+        st.dataset = keep;
+        st.blend = null;
+        // Accumulate across batches, then report only what violates a gate.
+        if (rows.length) HOOKS.__vrmAuditRows = (HOOKS.__vrmAuditRows || []).concat(rows);
+        const all = HOOKS.__vrmAuditRows || [];
+        const problems = all.filter((r) => {
+          if (r.error) return true;
+          // A hand may only hop arms if the clip really uses two hands; in a
+          // single-handed clip the same hand must keep the same arm.
+          const singleShare = 1 - r.multiFrames / Math.max(1, r.frames);
+          if (singleShare >= 0.9 && r.swaps > 0) return true;
+          if (r.relaxedDevDeg > 15) return true;
+          if (r.pairs >= 5 && r.minGap != null && r.minGap < 0.045) return true;
+          return false;
+        });
+        const travel = all.map((r) => r.travel).sort((x, y) => x - y);
+        return {
+          batch: rows.length,
+          total: all.length,
+          problems: problems.map((r) => ({
+            clip: r.clip, sides: r.sides, swaps: r.swaps, dup: r.dup,
+            minGap: r.minGap, dev: r.relaxedDevDeg, travel: r.travel,
+            singleShare: +(1 - r.multiFrames / Math.max(1, r.frames)).toFixed(2),
+          })),
+          twoHandedClips: all.filter((r) => r.multiFrames >= r.frames * 0.1).length,
+          staticClips: all.filter((r) => r.travel < 0.05).length,
+          maxRelaxedDev: all.reduce((m, r) => Math.max(m, r.relaxedDevDeg), 0),
+          travelP05: travel.length ? travel[Math.floor(travel.length * 0.05)] : null,
+          travelMedian: travel.length ? travel[Math.floor(travel.length / 2)] : null,
+        };
       };
     }
 

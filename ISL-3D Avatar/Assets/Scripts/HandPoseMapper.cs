@@ -71,6 +71,24 @@ public class HandPoseMapper : MonoBehaviour
     const float CLASP_THRESHOLD = 0.3f;
     const float CLASP_FULL = 0.13f;
     const float CLASP_MIN_SCALE = 0.35f;
+    // Hand-to-arm assignment (web parity). The tracker's per-frame handedness
+    // label is not trustworthy on the shipped clips: it flips mid-clip (79 of
+    // 184 per-gloss files) and one physical hand is sometimes reported twice
+    // (113 of 184). Bucketing by that label drove the wrong arm across the
+    // body on a flip, and two detections of one hand fought over a single arm
+    // - the overlapping hands in composed playback. Detections are clustered,
+    // then assigned to an arm by continuity with that arm's previous wrist;
+    // image side is only the fallback for a hand with no history yet.
+    const float HAND_MERGE_DIST = 0.05f;
+    const float SIDE_SWITCH_HYST = 0.06f;
+    // Idle arm pose (web parity). The model's rest pose is a T-pose, so a
+    // side with no landmarks (or the neutral a clip switch blends through) is
+    // eased to a wrist target beside the body instead of freezing with the
+    // arm straight out. DROP/FWD are fractions of the arm length; LATERAL is
+    // the wrist's outward offset from the shoulder.
+    const float IDLE_LATERAL = 0.1f;
+    const float IDLE_DROP = 0.8f;
+    const float IDLE_FWD = 0.12f;
     private float claspAdjLeft, claspAdjRight;
     private bool clasping;
     // Measured hand thickness (metres): the contact assist may press the
@@ -85,6 +103,10 @@ public class HandPoseMapper : MonoBehaviour
     // Previous-frame wrist positions (raw landmark coords) for the
     // per-side single-hand rule.
     private Vector3 lastWristLeft, lastWristRight;
+    // Side the last single-hand frame was assigned to. Hysteresis only: an
+    // arm only takes a hand over from the other arm once that arm's previous
+    // wrist is clearly farther away.
+    private HandSide? lastSingleSide;
     private bool haveLastWristLeft, haveLastWristRight;
     // Previous wrist orientations for the angular-velocity cap.
     private Quaternion lastWristQLeft, lastWristQRight;
@@ -142,7 +164,7 @@ public class HandPoseMapper : MonoBehaviour
     // case hands still rotate and arms stay on the Animator.
     private class ArmRig
     {
-        public Transform upper, lower;
+        public Transform upper, lower, hand;
         public bool isLeft;
         public Vector3 shoulder;      // rest world position (S)
         public float lenU, lenL;      // upper / forearm lengths
@@ -150,6 +172,10 @@ public class HandPoseMapper : MonoBehaviour
         public Vector3 restDirU, restDirL;
         public Vector3 pole;          // elbow hint (world)
         public Vector3 chest;         // signing-box anchor (world)
+        // Arms-down idle solved once at setup (web parity); the rest pose is
+        // a T-pose, which is not a neutral a signer ever returns to.
+        public bool hasIdle;
+        public Quaternion idleUpper, idleLower, handRestLocal;
     }
     private ArmRig leftArm, rightArm;
 
@@ -315,35 +341,103 @@ public class HandPoseMapper : MonoBehaviour
         if (frame == null || frame.hands == null || frame.hands.Count == 0)
             return; // sparse frame: skip gracefully, keep previous pose
 
-        // At most ONE hand per side per frame: tracker mislabels put two
-        // same-side hands in a frame (190/288 clips affected), and driving
-        // both double-drives one arm (last-wins flicker + starved side).
-        // Keep the wrist nearest that side's previous wrist (web parity).
-        HandData leftPick = null, rightPick = null;
-        Vector3 leftPrev = lastWristLeft, rightPrev = lastWristRight;
-        bool haveLeftPrev = haveLastWristLeft, haveRightPrev = haveLastWristRight;
+        // Cluster the frame's detections first (web parity): the tracker
+        // reports one physical hand twice often enough to matter, and two
+        // copies drive two arms that then occupy the same space.
+        var clusters = new List<HandData>();
         foreach (HandData hand in frame.hands)
         {
             if (!HandIdentity.IsValidForAnimation(hand))
                 continue;
+            Vector3 w = ToRaw(hand.landmarks[0]);
+            int near = -1;
+            for (int i = 0; i < clusters.Count; i++)
+            {
+                Vector3 p = ToRaw(clusters[i].landmarks[0]);
+                float dx = w.x - p.x;
+                float dy = w.y - p.y;
+                if (Mathf.Sqrt(dx * dx + dy * dy) < HAND_MERGE_DIST)
+                {
+                    near = i;
+                    break;
+                }
+            }
+            if (near < 0)
+            {
+                clusters.Add(hand);
+            }
+            else if (hand.handedness_score > clusters[near].handedness_score)
+            {
+                // One hand seen twice: keep the more confident detection.
+                clusters[near] = hand;
+            }
+        }
 
-            HandSide side = HandIdentity.Normalize(hand.handedness);
-            if (mirrorHands)
-                side = side == HandSide.Left ? HandSide.Right : HandSide.Left;
-
+        // Assign clusters to arms by CONTINUITY - the arm whose previous
+        // wrist is nearest keeps the hand - never by the per-frame handedness
+        // label, which flips mid-clip and would swap the signing arm. Image
+        // side is only the fallback for an arm with no history yet.
+        HandData leftPick = null, rightPick = null;
+        if (clusters.Count == 1)
+        {
+            HandData hand = clusters[0];
             Vector3 wrist = ToRaw(hand.landmarks[0]);
+            float cl = WristCost(wrist, lastWristLeft, haveLastWristLeft);
+            float cr = WristCost(wrist, lastWristRight, haveLastWristRight);
+            HandSide side;
+            if (Mathf.Approximately(cl, cr))
+            {
+                // No history on either arm: the signer faces the camera, so
+                // image-left is the signer's right hand = the avatar's right.
+                side = hand.landmarks[0].x > 0.5f ? HandSide.Left : HandSide.Right;
+            }
+            else
+            {
+                side = cl < cr ? HandSide.Left : HandSide.Right;
+                HandSide other = side == HandSide.Left ? HandSide.Right : HandSide.Left;
+                if (lastSingleSide == other && Mathf.Abs(cl - cr) < SIDE_SWITCH_HYST)
+                    side = other;
+            }
+            lastSingleSide = side;
             if (side == HandSide.Left)
+                leftPick = hand;
+            else
+                rightPick = hand;
+        }
+        else if (clusters.Count >= 2)
+        {
+            // Two or more distinct hands: keep the two most confident and pick
+            // the pairing (or its swap) with the lower total distance. A tie
+            // means neither arm has history, and the lateral rule breaks it.
+            clusters.Sort((a, b) => b.handedness_score.CompareTo(a.handedness_score));
+            HandData a0 = clusters[0];
+            HandData a1 = clusters[1];
+            bool swap = a0.landmarks[0].x > a1.landmarks[0].x;
+            HandData leftMost = swap ? a1 : a0;   // smaller image x
+            HandData rightMost = swap ? a0 : a1;
+            float straight =
+                WristCost(ToRaw(leftMost.landmarks[0]), lastWristRight, haveLastWristRight)
+                + WristCost(ToRaw(rightMost.landmarks[0]), lastWristLeft, haveLastWristLeft);
+            float crossed =
+                WristCost(ToRaw(leftMost.landmarks[0]), lastWristLeft, haveLastWristLeft)
+                + WristCost(ToRaw(rightMost.landmarks[0]), lastWristRight, haveLastWristRight);
+            if (straight <= crossed)
             {
-                if (leftPick == null || (haveLeftPrev && (wrist - leftPrev).sqrMagnitude
-                    < (ToRaw(leftPick.landmarks[0]) - leftPrev).sqrMagnitude))
-                    leftPick = hand;
+                rightPick = leftMost;
+                leftPick = rightMost;
             }
-            else if (side == HandSide.Right)
+            else
             {
-                if (rightPick == null || (haveRightPrev && (wrist - rightPrev).sqrMagnitude
-                    < (ToRaw(rightPick.landmarks[0]) - rightPrev).sqrMagnitude))
-                    rightPick = hand;
+                leftPick = leftMost;
+                rightPick = rightMost;
             }
+            lastSingleSide = null;
+        }
+        if (mirrorHands)
+        {
+            HandData swapPick = leftPick;
+            leftPick = rightPick;
+            rightPick = swapPick;
         }
         // Contact assist (web parity): compute the pair's lateral squeeze
         // BEFORE the hands are animated, because SolveArm consumes it.
@@ -379,12 +473,36 @@ public class HandPoseMapper : MonoBehaviour
             haveLastWristLeft = true;
             AnimateHand(leftPick, true);
         }
+        else
+        {
+            // No landmarks for this side: ease to the arms-down idle instead
+            // of freezing wherever the previous clip left it (web parity).
+            RelaxArm(leftArm);
+        }
         if (rightPick != null)
         {
             lastWristRight = ToRaw(rightPick.landmarks[0]);
             haveLastWristRight = true;
             AnimateHand(rightPick, false);
         }
+        else
+        {
+            RelaxArm(rightArm);
+        }
+    }
+
+    /// <summary>
+    /// Distance from a wrist to an arm's previous wrist, in raw landmark
+    /// units. A fixed cost when the arm has no history, so "no history" loses
+    /// to any real distance and ties fall back to the lateral rule.
+    /// </summary>
+    float WristCost(Vector3 wrist, Vector3 previous, bool havePrevious)
+    {
+        if (!havePrevious)
+            return 0.5f;
+        float dx = wrist.x - previous.x;
+        float dy = wrist.y - previous.y;
+        return Mathf.Sqrt(dx * dx + dy * dy);
     }
 
     // ==========================================
@@ -901,6 +1019,46 @@ public class HandPoseMapper : MonoBehaviour
         rightArm = BuildArmRig(false, chest);
         if (leftArm == null && rightArm == null)
             Debug.LogWarning("HandPoseMapper: no arm bones found; arm IK disabled.");
+        else
+            BuildIdlePose();
+    }
+
+    /// <summary>
+    /// Solve the arms-down idle once, through the same two-bone IK the signs
+    /// use, so it obeys the capsule / chest clamps and the reach limit instead
+    /// of fighting them (web parity). Leaves the avatar in that pose at rest.
+    /// </summary>
+    void BuildIdlePose()
+    {
+        foreach (ArmRig rig in new[] { leftArm, rightArm })
+        {
+            if (rig == null)
+                continue;
+            float len = rig.lenU + rig.lenL;
+            float s = rig.isLeft ? 1f : -1f;
+            Vector3 target = new Vector3(
+                rig.shoulder.x + s * IDLE_LATERAL * len,
+                rig.shoulder.y - IDLE_DROP * len,
+                rig.shoulder.z + IDLE_FWD * len);
+            SolveArmAt(rig, target, instant: true);
+            rig.idleUpper = rig.upper.localRotation;
+            rig.idleLower = rig.lower.localRotation;
+            rig.hasIdle = true;
+        }
+    }
+
+    /// <summary>
+    /// Ease an arm with no landmarks this frame back to the idle pose instead
+    /// of freezing wherever the previous clip left it (web parity).
+    /// </summary>
+    void RelaxArm(ArmRig rig)
+    {
+        if (rig == null || !rig.hasIdle)
+            return;
+        rig.upper.localRotation = Smooth(rig.upper.localRotation, rig.idleUpper);
+        rig.lower.localRotation = Smooth(rig.lower.localRotation, rig.idleLower);
+        if (rig.hand != null)
+            rig.hand.localRotation = Smooth(rig.hand.localRotation, rig.handRestLocal, 0.6f);
     }
 
     ArmRig BuildArmRig(bool isLeft, Vector3 chest)
@@ -940,12 +1098,13 @@ public class HandPoseMapper : MonoBehaviour
 
         return new ArmRig
         {
-            upper = upper, lower = lower,
+            upper = upper, lower = lower, hand = hand,
             isLeft = isLeft,
             shoulder = S, lenU = lenU, lenL = lenL,
             restWQU = restWQU, restWQL = restWQL,
             restDirU = restDirU, restDirL = restDirL,
             pole = pole, chest = chest,
+            handRestLocal = hand.localRotation,
         };
     }
 
@@ -978,7 +1137,26 @@ public class HandPoseMapper : MonoBehaviour
                     + (rig.isLeft ? claspAdjLeft : claspAdjRight),
                 C.y + (calibCenter.y - wristRaw.y) * HEIGHT_SCALE * s,
                 Mathf.Max(C.z + 0.3f * s - w.z * 0.4f * s, C.z + 0.06f * s));
+            SolveArmAt(rig, target, instant: false);
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"HandPoseMapper: arm IK skipped ({e.Message}).");
+        }
+    }
 
+    /// <summary>
+    /// Two-bone IK from an explicit world wrist target (web parity with
+    /// applyArmAt). `instant` skips the smoothing; only the idle solve at
+    /// setup uses it, so the captured idle is the converged pose.
+    /// </summary>
+    void SolveArmAt(ArmRig rig, Vector3 target, bool instant)
+    {
+        if (rig == null || !enableArmIK)
+            return;
+        try
+        {
+            Vector3 C = rig.chest;
             Vector3 toT = target - rig.shoulder;
             float dist = toT.magnitude;
             float maxReach = rig.lenU + rig.lenL - 0.02f;
@@ -1088,8 +1266,9 @@ public class HandPoseMapper : MonoBehaviour
             {
                 qU = Quaternion.FromToRotation(rig.restDirU, upperDir) * rig.restWQU;
             }
-            rig.upper.localRotation = Smooth(rig.upper.localRotation,
-                Quaternion.Inverse(parentQU) * qU);
+            rig.upper.localRotation = instant
+                ? Quaternion.Inverse(parentQU) * qU
+                : Smooth(rig.upper.localRotation, Quaternion.Inverse(parentQU) * qU);
 
             // ---- forearm ----  (its parent IS the upper arm just posed;
             // Unity refreshes world data on read, so the rotation below
@@ -1097,8 +1276,9 @@ public class HandPoseMapper : MonoBehaviour
             Quaternion parentQL = rig.lower.parent != null
                 ? rig.lower.parent.rotation : Quaternion.identity;
             Quaternion qL = Quaternion.FromToRotation(rig.restDirL, foreDir) * rig.restWQL;
-            rig.lower.localRotation = Smooth(rig.lower.localRotation,
-                Quaternion.Inverse(parentQL) * qL);
+            rig.lower.localRotation = instant
+                ? Quaternion.Inverse(parentQL) * qL
+                : Smooth(rig.lower.localRotation, Quaternion.Inverse(parentQL) * qL);
         }
         catch (Exception e)
         {
