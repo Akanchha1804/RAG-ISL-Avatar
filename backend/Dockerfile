@@ -1,4 +1,6 @@
-FROM python:3.11-slim
+# 3.12: numpy 2.5.4 (see requirements.txt) requires >=3.12, so a 3.11 base
+# image fails the install step outright.
+FROM python:3.12-slim
 
 WORKDIR /app
 

@@ -2,6 +2,10 @@
 # skipped) and that the running backend serves from. Bump deliberately: change
 # the version, re-run pytest, and re-check /api/health before committing.
 #
+# Requires Python >= 3.12: numpy 2.5.4 declares that floor, so the Dockerfile
+# and CI both use 3.12 (the interpreter the pin set was resolved on). On 3.11
+# the numpy pin has no distribution and the install fails before tests run.
+#
 # The image and CI install torch from the CPU index first (see Dockerfile /
 # .github/workflows/ci.yml), so the pin below resolves to the CPU build there
 # and the CUDA wheel is never pulled.

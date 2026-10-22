@@ -1,7 +1,7 @@
 name: CI
 
 # Nothing verified the test suite on push before this workflow existed: the
-# 131 backend tests and the frontend build only ever ran on a dev machine.
+# backend tests and the frontend build only ever ran on a dev machine.
 #
 # The Unity PlayMode probes (ISL-3D Avatar/Assets/Tests) are deliberately not
 # here: they need a Unity editor plus a licence in batch mode, so they stay a
@@ -27,9 +27,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 3.12 for the same reason as the Dockerfile's base image: the pinned
+      # numpy (2.5.4) requires >=3.12, so a 3.11 interpreter cannot resolve
+      # the lock set at all. This is the version the suite is green on.
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: pip
           cache-dependency-path: backend/requirements.txt
 
