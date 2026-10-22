@@ -136,6 +136,46 @@ def test_the_cleaner_repairs_a_dirty_clip():
     assert all(value == 0 for value in again.values()), again
 
 
+def test_no_clip_has_a_dead_stretch_longer_than_the_hold():
+    """A hole longer than HAND_GAP_HOLD is missing footage and must be spliced."""
+    bad = []
+    for path in _files():
+        dataset = cl.json.loads(path.read_text(encoding="utf-8"))
+        fps = float(dataset.get("fps") or 25.0)
+        run = 0
+        for i, frame in enumerate(dataset.get("frames") or []):
+            has_hand = any(
+                len(h.get("landmarks") or []) == 21 for h in (frame.get("hands") or [])
+            )
+            if has_hand:
+                if run and i - run > 0 and run / fps >= cl.MAX_GAP_SECONDS:
+                    bad.append(f"{path.name}: {run} dead frames ({run / fps:.2f}s) at {i - run}")
+                run = 0
+            else:
+                run += 1
+    assert not bad, (
+        f"{len(bad)} clip(s) still freeze mid-sign; run "
+        f"`python ISL_MediaPipe/clean_landmarks.py --apply`:\n" + "\n".join(bad[:10])
+    )
+
+
+def test_the_cleaner_splices_long_holes_but_keeps_short_dropouts():
+    frames = [{"hands": [_hand("Right", 0.30, 0.50)]} for _ in range(10)]
+    frames += [{"hands": []} for _ in range(10)]  # 0.33 s: bridged at runtime
+    frames += [{"hands": [_hand("Right", 0.32, 0.50)]} for _ in range(10)]
+    frames += [{"hands": []} for _ in range(30)]  # 1.0 s: missing footage
+    frames += [{"hands": [_hand("Right", 0.34, 0.50)]} for _ in range(10)]
+    clip = {"fps": 30.0, "frame_count": len(frames), "frames": frames}
+
+    removed = cl.splice_long_gaps(clip)
+
+    assert removed == 30
+    assert len(clip["frames"]) == 40
+    assert clip["cleaned_frame_count"] == 40
+    # The short dropout stays: the retargeters hold the pose through it.
+    assert sum(1 for f in clip["frames"] if not f["hands"]) == 10
+
+
 def test_the_cleaner_keeps_genuine_two_handed_clips():
     """A clip with many two-hand frames must keep both hands and both labels."""
     frames = []

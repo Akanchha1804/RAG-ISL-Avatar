@@ -26,6 +26,11 @@ R3  In a STRONGLY single-handed clip (two-hand frames <= 10%), keep at most
     one detection per frame, chosen by continuity with the previous kept
     wrist. Frames that briefly hallucinate a second hand are the ones that
     made both arms lunge at the same spot.
+R4  Remove interior stretches with no usable hand that last MAX_GAP_SECONDS
+    or longer. A short dropout is bridged by the retargeters (they hold the
+    last pose for HAND_GAP_HOLD); a longer one is missing footage, and playing
+    it froze the sign or dropped the arm to rest mid-sign. The frames are
+    removed, not retimed, so the clip simply gets shorter.
 
 Mixed clips (many genuine two-hand frames) keep their two-hand frames; only
 R1 and R2 apply there. The pass is idempotent, writes only files that
@@ -49,6 +54,7 @@ from pathlib import Path
 MERGE_DIST = 0.04  # normalised image distance treated as the same hand
 SINGLE_MAJORITY = 0.5  # >= this share of single-hand frames -> stabilise labels
 STRONG_SINGLE = 0.10  # <= this share of two-hand frames -> keep one hand/frame
+MAX_GAP_SECONDS = 0.5  # interior no-hand stretch that is missing footage, not a hold
 
 
 def wrist(hand: dict) -> dict:
@@ -86,9 +92,40 @@ def dedupe(hands: list[dict]) -> list[dict]:
     return kept
 
 
+def splice_long_gaps(dataset: dict) -> int:
+    """R4: remove interior stretches with no usable hand (>= MAX_GAP_SECONDS).
+
+    Returns how many frames were removed. A clip that ends inside a hole keeps
+    it: playback stops there anyway and the player eases the arms down.
+    """
+    frames = dataset.get("frames") or []
+    fps = float(dataset.get("fps") or 25.0)
+    keep: list[dict] = []
+    removed = 0
+    i = 0
+    while i < len(frames):
+        if valid_hands(frames[i]):
+            keep.append(frames[i])
+            i += 1
+            continue
+        j = i
+        while j < len(frames) and not valid_hands(frames[j]):
+            j += 1
+        interior = i > 0 and j < len(frames)
+        if interior and (j - i) / fps >= MAX_GAP_SECONDS:
+            removed += j - i
+        else:
+            keep.extend(frames[i:j])
+        i = j
+    if removed:
+        dataset["frames"] = keep
+        dataset["cleaned_frame_count"] = len(keep)
+    return removed
+
+
 def clean_dataset(dataset: dict) -> dict:
-    """Return {'merged', 'relabelled', 'dropped'} for one clip."""
-    stats = {"merged": 0, "relabelled": 0, "dropped": 0}
+    """Return {'merged', 'relabelled', 'dropped', 'spliced'} for one clip."""
+    stats = {"merged": 0, "relabelled": 0, "dropped": 0, "spliced": 0}
     frames = dataset.get("frames") or []
     with_hands = 0
     single = 0
@@ -159,6 +196,8 @@ def clean_dataset(dataset: dict) -> dict:
         prev = wrist(hands[0])
         frame["hands"] = hands
 
+    stats["spliced"] = splice_long_gaps(dataset)
+
     return stats
 
 
@@ -189,6 +228,18 @@ def audit(dataset: dict) -> list[str]:
             problems.append(f"hand label flips mid-clip ({len(set(labels))} labels)")
         if two / with_hands <= STRONG_SINGLE and two:
             problems.append(f"{two} two-hand frame(s) in a single-handed clip")
+    # R4: a long hole in the middle is missing footage, not a hold.
+    fps = float(dataset.get("fps") or 25.0)
+    run = 0
+    for i, frame in enumerate(frames):
+        if valid_hands(frame):
+            if run and i - run > 0 and run / fps >= MAX_GAP_SECONDS:
+                problems.append(
+                    f"{run} dead frames ({run / fps:.2f}s) inside the clip at frame {i - run}"
+                )
+            run = 0
+        else:
+            run += 1
     return problems
 
 
@@ -235,6 +286,7 @@ def main() -> int:
     print(f"merged dups  : {totals['merged']}")
     print(f"relabelled   : {totals['relabelled']}")
     print(f"dropped      : {totals['dropped']}")
+    print(f"spliced      : {totals['spliced']} frames")
     if not args.apply and changed:
         print("(report only - pass --apply to rewrite)")
     return 0 if dirty_after == 0 else 1

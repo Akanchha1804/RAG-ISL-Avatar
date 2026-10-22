@@ -89,6 +89,15 @@ public class HandPoseMapper : MonoBehaviour
     const float IDLE_LATERAL = 0.1f;
     const float IDLE_DROP = 0.8f;
     const float IDLE_FWD = 0.12f;
+
+    // A hand that disappears for a frame or two is a tracker dropout, not the
+    // sign ending; hold the last pose this long before easing that arm down
+    // (web parity). Shipped clips have holes up to 0.5 s inside a sign.
+    const float HAND_GAP_HOLD = 0.5f;
+
+    // Seconds each arm has been without landmarks, and the arms-down pose
+    // they ease to once the hold expires.
+    private float gapLeft, gapRight;
     private float claspAdjLeft, claspAdjRight;
     private bool clasping;
     // Measured hand thickness (metres): the contact assist may press the
@@ -338,14 +347,19 @@ public class HandPoseMapper : MonoBehaviour
             return;
 
         FrameData frame = dataset.frames[currentFrameIndex];
-        if (frame == null || frame.hands == null || frame.hands.Count == 0)
-            return; // sparse frame: skip gracefully, keep previous pose
+        if (frame == null)
+            return;
+
+        // Gap clocks advance in seconds so a dropped hand is held, not
+        // dropped to the idle, for the same wall-clock time as the web.
+        float step = Mathf.Min(Time.deltaTime, 0.1f);
 
         // Cluster the frame's detections first (web parity): the tracker
         // reports one physical hand twice often enough to matter, and two
         // copies drive two arms that then occupy the same space.
         var clusters = new List<HandData>();
-        foreach (HandData hand in frame.hands)
+        List<HandData> hands = frame.hands ?? new List<HandData>();
+        foreach (HandData hand in hands)
         {
             if (!HandIdentity.IsValidForAnimation(hand))
                 continue;
@@ -471,23 +485,29 @@ public class HandPoseMapper : MonoBehaviour
         {
             lastWristLeft = ToRaw(leftPick.landmarks[0]);
             haveLastWristLeft = true;
+            gapLeft = 0f;
             AnimateHand(leftPick, true);
         }
         else
         {
-            // No landmarks for this side: ease to the arms-down idle instead
-            // of freezing wherever the previous clip left it (web parity).
-            RelaxArm(leftArm);
+            // No landmarks for this side. Hold the last pose through a short
+            // dropout; only a hand that stays gone eases down to the idle.
+            gapLeft += step;
+            if (gapLeft > HAND_GAP_HOLD)
+                RelaxArm(leftArm);
         }
         if (rightPick != null)
         {
             lastWristRight = ToRaw(rightPick.landmarks[0]);
             haveLastWristRight = true;
+            gapRight = 0f;
             AnimateHand(rightPick, false);
         }
         else
         {
-            RelaxArm(rightArm);
+            gapRight += step;
+            if (gapRight > HAND_GAP_HOLD)
+                RelaxArm(rightArm);
         }
     }
 
@@ -551,6 +571,8 @@ public class HandPoseMapper : MonoBehaviour
         frameTimer = 0f;
         haveLastWristLeft = haveLastWristRight = false;
         haveLastWristQLeft = haveLastWristQRight = false;
+        gapLeft = gapRight = 0f;
+        lastSingleSide = null;
         CalibrateSigningSpace();
         Debug.Log($"HandPoseMapper: dataset set ({dataset.frames.Count} frames).");
     }
@@ -775,6 +797,8 @@ public class HandPoseMapper : MonoBehaviour
         frameTimer = 0f;
         haveLastWristLeft = haveLastWristRight = false;
         haveLastWristQLeft = haveLastWristQRight = false;
+        gapLeft = gapRight = 0f;
+        lastSingleSide = null;
         CalibrateSigningSpace();
         Debug.Log($"HandPoseMapper: loaded {dataset.frames.Count} frames from {source}.");
         return true;

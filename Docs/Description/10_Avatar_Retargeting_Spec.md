@@ -86,6 +86,16 @@ volume, not the wrist point.
    frame eases to that pose rather than freezing wherever the previous clip
    left it, and the web's clip-switch blend passes through it instead of the
    rest pose (which popped both arms out to a T-pose between glosses).
+8. **Hold through dropouts, then idle.** A hand does not disappear for one
+   frame because the sign ended: the tracker loses it. Short holes are
+   bridged by holding that arm's last pose for `HAND_GAP_HOLD` seconds; only a
+   hand that stays missing longer eases down to the idle. Without this every
+   detection dropout dropped the arm to the hip and snapped it back, reading
+   as the arm pumping mid-sign (164 such holes in the shipped clips, median 2
+   frames). Holes longer than `HAND_GAP_HOLD` are missing footage rather than
+   a hold and are removed from the data by
+   `ISL_MediaPipe/clean_landmarks.py` (R4), so playback continues on the next
+   detected pose instead of freezing.
 
 ## Normative constants
 
@@ -111,6 +121,7 @@ Every value below must be identical in
 | `IDLE_LATERAL` | 0.1 | idle wrist outward offset from the shoulder (x arm length) |
 | `IDLE_DROP` | 0.8 | idle wrist drop below the shoulder (x arm length) |
 | `IDLE_FWD` | 0.12 | idle wrist forward offset from the shoulder (x arm length) |
+| `HAND_GAP_HOLD` | 0.5 | seconds a missing hand keeps its last pose before the arm eases to idle |
 
 ## Deliberately not shared
 

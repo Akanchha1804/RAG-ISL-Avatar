@@ -426,6 +426,13 @@ const IDLE_FWD = 0.12;
 // Load-time convergence budget for the idle solve (per side, at 60 Hz).
 const IDLE_SETTLE_STEPS = 240;
 
+// A hand that disappears for a frame or two is a tracker dropout, not the
+// sign ending: 164 such holes sit inside the shipped clips (median 2 frames,
+// p90 7) and every one of them used to drop that arm to the idle and snap it
+// back, which read as the arm pumping mid-sign. Hold the last pose for this
+// long first; only a hand that stays missing really is out of the clip.
+const HAND_GAP_HOLD = 0.5;
+
 function calibrateSigningSpace(dataset) {
   const xs = [];
   const ys = [];
@@ -1135,6 +1142,22 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       }
     };
 
+    // Ease a side down only once it has been missing for longer than a
+    // dropout: short holes hold the last pose, so the arm neither pumps
+    // between the sign and the idle nor drops mid-sign.
+    const settleArm = (side, dt) => {
+      st.gap = st.gap || { left: 0, right: 0 };
+      st.gap[side] = (st.gap[side] || 0) + dt;
+      if (st.gap[side] > HAND_GAP_HOLD) relaxArm(side, dt);
+    };
+
+    // A side that has landmarks this frame is being driven: clear its gap
+    // clock so the next dropout starts from zero.
+    const driveArm = (side) => {
+      st.gap = st.gap || { left: 0, right: 0 };
+      st.gap[side] = 0;
+    };
+
     // Solve the arms-down idle once, through the same IK the signs use, so it
     // obeys the capsule/chest clamps and the reach limit instead of fighting
     // them. Iterating the smoothed IK to convergence is the cheapest way to
@@ -1329,13 +1352,18 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       };
       const assign = [];
       if (clusters.length === 0) {
-        // Sparse frame: no usable detection. Relax both arms rather than
-        // leaving a stale pose (and never fall through to the pairing code).
+        // Sparse frame: no usable detection. Hold both arms (a short dropout)
+        // or ease them down (a hand that is really gone), and never fall
+        // through to the pairing code.
         st.claspAdj = null;
         st.claspInfo = null;
-        relaxArm('left', dt);
-        relaxArm('right', dt);
-        st.lastAssign = { clusters: 0, sides: [], relaxed: ['left', 'right'] };
+        settleArm('left', dt);
+        settleArm('right', dt);
+        st.lastAssign = {
+          clusters: 0,
+          sides: [],
+          relaxed: ['left', 'right'].filter((sd) => (st.gap[sd] || 0) > HAND_GAP_HOLD),
+        };
         return;
       }
       if (clusters.length === 1) {
@@ -1423,15 +1451,17 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           /* never let one bad frame kill playback */
         }
       }
-      // A side with nothing this frame relaxes to the arms-down idle instead
-      // of freezing wherever the last clip left it.
+      // A side with nothing this frame holds its last pose through a tracker
+      // dropout (HAND_GAP_HOLD) and only then relaxes to the arms-down idle.
       for (const side of ['left', 'right']) {
-        if (!wrist[side]) relaxArm(side, dt);
+        if (wrist[side]) driveArm(side);
+        else settleArm(side, dt);
       }
       st.lastAssign = {
         clusters: clusters.length,
         sides: assign.map((pair) => pair[1]),
-        relaxed: ['left', 'right'].filter((sd) => !wrist[sd]),
+        relaxed: ['left', 'right'].filter(
+          (sd) => !wrist[sd] && (st.gap[sd] || 0) > HAND_GAP_HOLD),
       };
     };
 
@@ -1778,6 +1808,23 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         a.remove();
         return 'ok:' + a.download;
       };
+      // Load one landmark clip directly, for visual checks and for replaying a
+      // single file without going through the translation pipeline. Dev-only.
+      HOOKS.__vrmPlay = async (url) => {
+        const res = await fetch(url, { cache: 'reload' });
+        const data = await res.json();
+        data.calib = calibrateSigningSpace(data);
+        st.dataset = data;
+        st.playlist = null;
+        st.blend = null;
+        st.playIndex = 0;
+        st.frameIndex = 0;
+        st.frameTimer = 0;
+        st.lastWrist = {};
+        st.lastSingleSide = null;
+        st.gap = { left: 0, right: 0 };
+        return { clip: String(url).split('/').pop(), frames: (data.frames || []).length, fps: data.fps };
+      };
       // Palm-orientation probe: does the wrist actually reach its target?
       HOOKS.__vrmPalm = () => {
         const out = {};
@@ -1986,6 +2033,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           st.blend = null;
           st.lastWrist = {};
           st.lastSingleSide = null;
+          st.gap = { left: 0, right: 0 };
           const dup0 = st.viol.dup;
           const hold0 = st.viol.sideHold;
           let minGap = Infinity;
@@ -1995,6 +2043,9 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           let multiFrames = 0;
           let singleFrames = 0;
           let swaps = 0;
+          let relaxEvents = 0;
+          let holdFrames = 0;
+          const wasRelaxed = { left: false, right: false };
           let prevSide = null;
           const relaxRun = { left: 0, right: 0 };
           const sidesSeen = new Set();
@@ -2030,6 +2081,10 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
             }
             for (const side of ['left', 'right']) {
               const relaxed = (a.relaxed || []).includes(side);
+              if (relaxed && !wasRelaxed[side]) relaxEvents += 1;
+              wasRelaxed[side] = relaxed;
+              // Absent but still inside HAND_GAP_HOLD: the pose is held.
+              if (!relaxed && !(a.sides || []).includes(side)) holdFrames += 1;
               if (!relaxed) {
                 relaxRun[side] = 0;
                 continue;
@@ -2064,6 +2119,8 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
             multiFrames,
             sides: Array.from(sidesSeen).join('+'),
             swaps,
+            relaxEvents,
+            holdFrames,
             pairs,
             minGap: Number.isFinite(minGap) ? +minGap.toFixed(4) : null,
             relaxedDevDeg: +relaxedDev.toFixed(1),
@@ -2085,6 +2142,9 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           if (singleShare >= 0.9 && r.swaps > 0) return true;
           if (r.relaxedDevDeg > 15) return true;
           if (r.pairs >= 5 && r.minGap != null && r.minGap < 0.045) return true;
+          // Dropping an arm to rest mid-sign more than the one resting hand
+          // allows means a gap outlasted HAND_GAP_HOLD.
+          if (r.relaxEvents > 2) return true;
           return false;
         });
         const travel = all.map((r) => r.travel).sort((x, y) => x - y);
@@ -2094,11 +2154,14 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           problems: problems.map((r) => ({
             clip: r.clip, sides: r.sides, swaps: r.swaps, dup: r.dup,
             minGap: r.minGap, dev: r.relaxedDevDeg, travel: r.travel,
+            relax: r.relaxEvents,
             singleShare: +(1 - r.multiFrames / Math.max(1, r.frames)).toFixed(2),
           })),
           twoHandedClips: all.filter((r) => r.multiFrames >= r.frames * 0.1).length,
           staticClips: all.filter((r) => r.travel < 0.05).length,
           maxRelaxedDev: all.reduce((m, r) => Math.max(m, r.relaxedDevDeg), 0),
+          relaxEvents: all.reduce((sum, r) => sum + r.relaxEvents, 0),
+          holdFrames: all.reduce((sum, r) => sum + r.holdFrames, 0),
           travelP05: travel.length ? travel[Math.floor(travel.length * 0.05)] : null,
           travelMedian: travel.length ? travel[Math.floor(travel.length / 2)] : null,
         };

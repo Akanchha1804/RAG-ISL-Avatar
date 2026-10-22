@@ -44,6 +44,7 @@ SHARED = (
     "IDLE_LATERAL",
     "IDLE_DROP",
     "IDLE_FWD",
+    "HAND_GAP_HOLD",
 )
 
 _SPEC_ROW = re.compile(r"\|\s*`([A-Z0-9_]+)`\s*\|\s*([0-9.]+)\s*\|")

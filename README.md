@@ -182,21 +182,29 @@ the other arm - across the body, into the space the resting hand occupied -
 and a duplicate drove two arms to the same place. That was the overlapping
 hands in composed playback.
 
-`ISL_MediaPipe/clean_landmarks.py` repairs the data in place (merge duplicate
+`ISL_MediaPipe/clean_landmarks.py` repairs the data in place: merge duplicate
 detections, stabilise labels, keep one hand per frame in strongly
-single-handed clips), is idempotent, and prints before/after counts:
+single-handed clips, and splice out stretches of 0.5 s or more with no
+detection at all (7 clips, 242 frames) so a sign cannot freeze halfway
+through. It is idempotent and prints before/after counts:
 `python ISL_MediaPipe/clean_landmarks.py --apply`.
 `backend/tests/test_landmark_hygiene.py` re-audits all 288 clips in CI, so a
-regenerated dataset cannot quietly reintroduce the artefacts.
+regenerated dataset cannot quietly reintroduce the artefacts or the dead
+stretches.
 
 The retargeters themselves no longer trust the label either: they cluster
-detections and assign each to the arm whose previous wrist is nearest, and a
-side with no landmarks eases to an arms-down idle pose instead of freezing or
-snapping to the model's T-pose (see `Docs/Description/10_Avatar_Retargeting_Spec.md`).
+detections and assign each to the arm whose previous wrist is nearest. A hand
+that disappears for a frame or two is a tracker dropout, not the sign ending,
+so its arm holds the last pose for `HAND_GAP_HOLD` (0.5 s) before easing to
+the arms-down idle - without that, every dropout dropped the arm to the hip
+and snapped it back, which read as the arm pumping mid-sign. A side with no
+landmarks for longer keeps the pose it started the clip in until the hold
+expires, instead of snapping to the model's T-pose (see
+`Docs/Description/10_Avatar_Retargeting_Spec.md`).
 In a dev build, `__vrmAudit([urls])` in the browser console replays clips
 through the real retargeter and reports, per clip, which arm was driven, hand
-separation, worst idle-arm deviation and wrist travel - the batch check that
-replaces watching each animation.
+separation, arm-to-idle drops, held frames and wrist travel - the batch check
+that replaces watching each animation.
 
 ## License / scope
 
