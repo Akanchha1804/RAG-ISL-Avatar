@@ -40,6 +40,8 @@ class AppPaths:
     cislr_csv_source: str
     cislr_videos_dir: Path
     cislr_videos_dir_source: str
+    vrm_model: Path
+    vrm_model_source: str
     index_dir: Path
     model_dir: Path
 
@@ -58,6 +60,7 @@ class AppPaths:
             "cislr_videos_dir": entry(
                 self.cislr_videos_dir, self.cislr_videos_dir_source
             ),
+            "vrm_model": entry(self.vrm_model, self.vrm_model_source),
             "index_dir": entry(self.index_dir, "backend"),
             "model_dir": entry(self.model_dir, "backend"),
         }
@@ -103,6 +106,15 @@ def resolve_paths(environ: Optional[dict] = None) -> AppPaths:
         data_dir / "Dataset" / "data" / "cislr" / "CISLR_v1.5-a_videos",
         BACKEND_DIR / "clips",
     )
+    # The VRM avatar model. Unlike the other assets this one has no
+    # DATA_DIR-only home: the web viewport and the Unity client both fetch it
+    # from /avatar/model.vrm, so resolving it to a missing file leaves the
+    # avatar blank with no fallback (the Docker image copies only backend/,
+    # so the repo layout below does not exist there).
+    vrm_model, vrm_model_src = _pick(
+        data_dir / "ISL-3D Avatar" / "Assets" / "model_isl.vrm",
+        BACKEND_DIR / "avatar" / "model_isl.vrm",
+    )
 
     return AppPaths(
         data_dir=data_dir,
@@ -116,6 +128,8 @@ def resolve_paths(environ: Optional[dict] = None) -> AppPaths:
         cislr_csv_source=cislr_src,
         cislr_videos_dir=cislr_videos_dir,
         cislr_videos_dir_source=cislr_videos_src,
+        vrm_model=vrm_model,
+        vrm_model_source=vrm_model_src,
         index_dir=BACKEND_DIR / "index",
         model_dir=BACKEND_DIR / "models" / "isl_gloss_t5",
     )

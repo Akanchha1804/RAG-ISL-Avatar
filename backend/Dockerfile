@@ -11,6 +11,11 @@ RUN pip install --no-cache-dir -r requirements.txt \
 
 COPY backend/ .
 
+# The VRM avatar lives outside backend/, so the repo layout paths.py resolves
+# first is absent here; carry a copy at the backend-local fallback path or
+# /avatar/model.vrm 404s and the web viewport renders no avatar.
+COPY ["ISL-3D Avatar/Assets/model_isl.vrm", "./avatar/model_isl.vrm"]
+
 # paths.py: DATA_DIR/ISL_MediaPipe/... primary; BACKEND_DIR/* fallback when DATA_DIR unset
 # Compose sets DATA_DIR=/data and mounts landmarks/mapping there.
 ENV DATA_DIR=/data \

@@ -58,8 +58,10 @@ LANDMARKS_DIR = _paths.landmarks_dir
 MAPPING_FILE = _paths.mapping_file
 CISLR_VIDEOS_DIR = _paths.cislr_videos_dir
 # The VRM avatar model shipped with the project (single source of truth;
-# served read-only so the web viewport can load the actual avatar).
-VRM_MODEL_PATH = DATA_DIR / "ISL-3D Avatar" / "Assets" / "model_isl.vrm"
+# served read-only so the web viewport can load the actual avatar). Resolved
+# via paths.py so both the DATA_DIR layout and the backend-local copy the
+# Docker image carries are honoured.
+VRM_MODEL_PATH = _paths.vrm_model
 
 # Minimum retrieval similarity before a retrieved sentence's glosses or
 # landmark file are trusted for the extractive "rag" method. Single source
@@ -147,13 +149,16 @@ else:
         f"DATA_DIR={DATA_DIR}"
     )
 
-# Per-gloss CISLR sign videos (<uid>.mp4), served read-only so the
-# avatar can play the actual sign for any gloss in the vocabulary.
+# Per-gloss CISLR sign videos (<uid>.mp4), served read-only as reference
+# footage for a gloss. The 10 GB source dataset is deliberately not shipped,
+# so absence is expected on a clone and is reported as a notice, not a fault.
 if CISLR_VIDEOS_DIR.exists():
     app.mount("/clips", StaticFiles(directory=str(CISLR_VIDEOS_DIR)), name="clips")
 else:
     print(
-        "[Startup][ERROR] CISLR videos directory not found - /clips disabled. "
+        "[Startup][INFO] CISLR video directory not found - /clips disabled. "
+        "Reference footage needs Dataset/ (not in the repo); motion is driven "
+        "by landmark JSON and is unaffected. "
         f"Tried: {CISLR_VIDEOS_DIR} (source={_paths.cislr_videos_dir_source}); "
         f"DATA_DIR={DATA_DIR}"
     )
@@ -161,7 +166,8 @@ else:
 if not VRM_MODEL_PATH.exists():
     print(
         "[Startup][ERROR] VRM avatar model not found - /avatar/model.vrm will 404. "
-        f"Tried: {VRM_MODEL_PATH}"
+        f"Tried: {VRM_MODEL_PATH} (source={_paths.vrm_model_source}); "
+        f"DATA_DIR={DATA_DIR}"
     )
 
 # =====================================================

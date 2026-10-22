@@ -3,13 +3,13 @@
  "files": 288,
  "violations": [],
  "guard_reliance": {
-  "x": 0.167,
-  "y": 0.035,
+  "x": 0.174,
+  "y": 0.031,
   "z": 1.0
  },
  "raw_wrist_center_y": {
   "min": 0.318,
-  "median": 0.717,
+  "median": 0.718,
   "max": 0.928
  }
 }

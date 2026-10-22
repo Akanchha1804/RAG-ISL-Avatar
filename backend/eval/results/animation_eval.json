@@ -1,7 +1,7 @@
 {
  "locked_refs": false,
  "n_tokens": 328,
- "clip_hit_rate": 0.8933,
+ "clip_hit_rate": 0.8963,
  "per_token_landmark_hit_rate": 0.878,
  "missing_clip_top": [
   [
@@ -15,10 +15,6 @@
   [
    "CARE",
    2
-  ],
-  [
-   "CONGRATULATIIONS",
-   1
   ],
   [
    "FAVOUR",
@@ -83,6 +79,10 @@
   [
    "LET",
    1
+  ],
+  [
+   "XXXXXXXX",
+   1
   ]
  ],
  "missing_landmark_top": [
@@ -99,7 +99,7 @@
    2
   ],
   [
-   "CONGRATULATIIONS",
+   "CONGRATULATIONS",
    1
   ],
   [

@@ -31,6 +31,19 @@ def test_rouge_l_perfect_and_partial():
     assert 0.0 < partial < 1.0
 
 
+def _wordnet_available() -> bool:
+    try:
+        import nltk
+
+        nltk.data.find("corpora/wordnet")
+        return True
+    except Exception:
+        return False
+
+
+@pytest.mark.skipif(
+    not _wordnet_available(), reason="nltk wordnet corpus not downloaded"
+)
 def test_meteor_perfect_and_partial():
     from eval.metrics_eval import meteor_mean
 

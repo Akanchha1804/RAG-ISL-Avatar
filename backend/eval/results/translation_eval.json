@@ -4,23 +4,23 @@
  "exact_match": 82,
  "exact_match_rate": 0.8119,
  "bleu": {
-  "bleu": 81.05,
+  "bleu": 81.73,
   "precisions": [
-   95.04,
-   84.71,
-   76.76,
-   69.84
+   95.61,
+   85.06,
+   77.3,
+   70.97
   ],
   "brevity_penalty": 1.0,
-  "hyp_len": 343,
+  "hyp_len": 342,
   "ref_len": 330
  },
  "rougeL": {
-  "rougeL_f1_mean": 0.9519,
+  "rougeL_f1_mean": 0.9528,
   "n": 101
  },
  "meteor": {
-  "meteor_mean": 0.9137,
+  "meteor_mean": 0.9162,
   "n": 101
  },
  "per_sentence": [
@@ -99,8 +99,8 @@
   {
    "sentence": "congratulations",
    "method": "direct_lookup",
-   "hypothesis": "CONGRATULATIIONS",
-   "reference": "CONGRATULATIIONS",
+   "hypothesis": "CONGRATULATIONS",
+   "reference": "CONGRATULATIONS",
    "corrected": false,
    "exact": true
   },
@@ -595,7 +595,7 @@
   {
    "sentence": "take care of yourself",
    "method": "direct_lookup",
-   "hypothesis": "TAKE CARE OF YOURSELF",
+   "hypothesis": "TAKE CARE YOU",
    "reference": "YOU TAKE CARE",
    "corrected": true,
    "exact": false

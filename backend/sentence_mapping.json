@@ -73,7 +73,7 @@
   },
   "congratulations": {
     "landmark_file": "congratulations_landmarks.json",
-    "glosses": "CONGRATULATIIONS",
+    "glosses": "CONGRATULATIONS",
     "video_count": 7,
     "video_used": "congratulations.mp4",
     "frame_count": 50,

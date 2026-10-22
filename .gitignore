@@ -79,3 +79,8 @@ Thumbs.db
 /probe_results.xml
 /scene_backup_check.unity
 /ISL-3D Avatar/*_report.txt
+
+# Third-party presentation templates (Slidesgo, ~33 MB). Left on disk for
+# reuse, but not shipped in the repo; the project's own decks in
+# Docs/Presentation/ stay tracked.
+/Docs/Presentation/Template/

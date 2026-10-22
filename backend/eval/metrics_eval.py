@@ -72,11 +72,28 @@ def rouge_l_mean(hypotheses: list, references: list) -> dict:
 
 
 def meteor_mean(hypotheses: list, references: list) -> dict:
-    """Mean sentence METEOR (nltk, needs wordnet; exact+stem+synonym)."""
+    """Mean sentence METEOR (nltk, needs wordnet; exact+stem+synonym).
+
+    WordNet is a separate one-time corpus download:
+
+        python -m nltk.downloader wordnet omw-1.4
+
+    BLEU and ROUGE-L need no corpus data, so a missing WordNet is reported as
+    an unavailable metric with the command that fixes it instead of aborting
+    the whole harness partway through the corpus.
+    """
     from nltk.translate.meteor_score import meteor_score
 
-    scores = [meteor_score([ref.split()], hyp.split())
-              for hyp, ref in zip(hypotheses, references)]
+    try:
+        scores = [meteor_score([ref.split()], hyp.split())
+                  for hyp, ref in zip(hypotheses, references)]
+    except LookupError:
+        return {
+            "meteor_mean": None,
+            "n": 0,
+            "error": "NLTK wordnet corpus not found - run: "
+                     "python -m nltk.downloader wordnet omw-1.4",
+        }
     return {
         "meteor_mean": round(sum(scores) / len(scores), 4) if scores else 0.0,
         "n": len(scores),
