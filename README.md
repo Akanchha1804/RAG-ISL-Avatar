@@ -4,7 +4,7 @@ An AI-powered RAG-based system that translates text and speech into Indian Sign 
 
 ## Architecture
 
-**Retrieve-then-generate:** sentences are embedded with `all-MiniLM-L6-v2`, searched in FAISS (distance converted with `similarity = 1/(1+L2)`). A top hit at or above the `0.75` similarity threshold reuses that sentence's curated glosses + landmark file (`rag`); otherwise the fine-tuned T5 generates glosses on the bare training-format prompt (retrieved examples are deliberately *not* injected — the few-shot wrapper made the model stitch retrieved glosses together), accepted only when every token appears in the input, else a word-by-word fallback. Both non-curated paths are normalized onto canonical CISLR gloss tokens (`hi` → `namaste`, `going` → `go`, be-verbs dropped) so every token resolves to a sign clip. The viewport shows only the project's VRM avatar: it signs the sentence landmark file when one exists, and otherwise signs per-gloss landmark clips (`/landmarks/gloss_<gloss>.json`, built by `ISL_MediaPipe/batch_gloss_landmarks.py`) in sequence. Full pipeline: STT → retrieval → generation → animation resolution → WebSocket/REST response.
+**Retrieve-then-generate:** sentences are embedded with `all-MiniLM-L6-v2`, searched in FAISS (distance converted with `similarity = 1/(1+L2)`). A top hit at or above the `0.75` similarity threshold reuses that sentence's curated glosses + landmark file (`rag`); otherwise the fine-tuned T5 generates glosses on the bare training-format prompt (retrieved examples are deliberately *not* injected — the few-shot wrapper made the model stitch retrieved glosses together), accepted only when every token appears in the input, else a word-by-word fallback. Both non-curated paths are normalized onto canonical CISLR gloss tokens (`hi` → `namaste`, `going` → `go`, be-verbs dropped) so a token resolves to a canonical gloss wherever a recorded sign exists. The viewport shows only the project's VRM avatar: it signs the sentence landmark file when one exists, and otherwise signs per-gloss landmark clips (`/landmarks/gloss_<gloss>.json`, built by `ISL_MediaPipe/batch_gloss_landmarks.py`) in sequence. Full pipeline: STT → retrieval → generation → animation resolution → WebSocket/REST response.
 
 ## Quick start
 
@@ -21,8 +21,14 @@ npm run dev        # http://localhost:5173, proxies /api, /landmarks and /clips 
 
 # Tests (no GPU, no real models required)
 cd backend
-pytest -q          # 69 tests
+pytest -q          # full suite: API, pipeline, retrieval, eval metrics,
+                   # path resolution, landmark hygiene and web/Unity
+                   # retargeting conformance
 ```
+
+The metrics tests and the eval harnesses additionally need the WordNet
+corpus, a one-time download: `python -m nltk.downloader wordnet omw-1.4`
+(without it that one metric skips).
 
 One-click launcher (uses the project venv, not the system Python):
 
@@ -103,12 +109,12 @@ Full spec: `Docs/Description/05_API_Specification-1.md`.
 
 ## Project layout
 
-- `backend/` — FastAPI app, RAG, gloss generator, animation resolver, tests (`backend/tests/`, 69 automated tests)
+- `backend/` - FastAPI app, RAG, gloss generator, animation resolver, tests (`backend/tests/`, run in CI)
 - `frontend/` — React + Vite UI
 - `ISL_MediaPipe/` — offline landmark extraction: `batch_process.py` (video → landmark JSON + `sentence_mapping.json`), `generate_mapping.py` (mapping repair), `scripts/`
 - `ISL-3D Avatar/` — Unity 6 + UniVRM scripts (`LandmarkModels.cs`, `HandPoseMapper.cs`, `LandmarkLoader.cs`, `LandmarkFetcher.cs`, `AvatarWebSocketClient.cs`)
 - `Dataset/` — ISL-CSLTR and CISLR corpora (10 GB, gitignored)
-- `Docs/Description/` — SRS, system design, API spec, test plan
+- `Docs/Description/` - SRS, system design, API spec, test plan, avatar retargeting spec
 - `notebooks/` — data augmentation and Flan-T5 fine-tuning scripts (run on Colab)
 
 ## Regenerating landmarks
@@ -133,6 +139,67 @@ weights there. Without them, `/api/translate` still works by falling back
 (RAG extractive / word-by-word) and `GET /api/health` reports
 `"t5_model": "not loaded"`.
 
+The shipped weights predate the `CONGRATULATIIONS` → `CONGRATULATIONS`
+correction in `augmented_glosses.csv` (the misspelling was flagged by
+`backend/eval/flag_references.py` and reached the corpus CSV, both
+`sentence_mapping.json` copies, the eval references and the training data), so
+the model path can still emit the old spelling. Re-run the fine-tune to bring
+the weights in line with the data; the curated/RAG path is already correct.
+
+## Coverage
+
+How much of the language the avatar can actually sign, as opposed to how much
+the pipeline can gloss. Numbers come from `backend/eval/results/` and
+`ISL_MediaPipe/output_landmarks/`; re-run `backend/eval/run_all.py` to refresh.
+
+| | |
+|---|---|
+| Curated corpus sentences (what RAG can retrieve) | 101 |
+| Per-gloss landmark clips | 184 |
+| Landmark files total (incl. sentence-level) | 288 |
+| Tokens in the 101-sentence corpus with per-token motion | **87.8%** |
+| Tokens with CISLR reference footage | 89.3% |
+| CISLR gloss vocabulary | 4,764 |
+
+So the corpus is covered well, but the *vocabulary* is not: 184 of 4,764
+glosses (3.9%) carry motion. Input that resolves onto a corpus sentence plays
+in full; a generated gloss outside those tokens is reported as unsupported
+rather than silently skipped (`_playable` in `retrieval.py`). The missing-token
+backlog is `missing_landmark_top` in `animation_eval.json`.
+
+The CISLR videos behind `/clips` (10 GB) and the Flan-T5 weights are not
+checked in, so a fresh clone runs without reference footage and with
+`"t5_model": "not loaded"`.
+
+### Landmark hygiene
+
+The MediaPipe pass trusted the tracker's per-frame handedness label and kept
+every detection it emitted, which produced two artefacts that reached the
+avatar: a label that flipped mid-clip (79 of the 184 per-gloss clips, 283
+flips) and one physical hand reported twice (113 clips, 520 frames). The web
+and Unity retargeters bucket hands by that label, so a flip moved the sign to
+the other arm - across the body, into the space the resting hand occupied -
+and a duplicate drove two arms to the same place. That was the overlapping
+hands in composed playback.
+
+`ISL_MediaPipe/clean_landmarks.py` repairs the data in place (merge duplicate
+detections, stabilise labels, keep one hand per frame in strongly
+single-handed clips), is idempotent, and prints before/after counts:
+`python ISL_MediaPipe/clean_landmarks.py --apply`.
+`backend/tests/test_landmark_hygiene.py` re-audits all 288 clips in CI, so a
+regenerated dataset cannot quietly reintroduce the artefacts.
+
+The retargeters themselves no longer trust the label either: they cluster
+detections and assign each to the arm whose previous wrist is nearest, and a
+side with no landmarks eases to an arms-down idle pose instead of freezing or
+snapping to the model's T-pose (see `Docs/Description/10_Avatar_Retargeting_Spec.md`).
+In a dev build, `__vrmAudit([urls])` in the browser console replays clips
+through the real retargeter and reports, per clip, which arm was driven, hand
+separation, worst idle-arm deviation and wrist travel - the batch check that
+replaces watching each animation.
+
 ## License / scope
+
+MIT - see `LICENSE`.
 
 Academic final-year project. No auth in demo scope; do not deploy publicly without auth and rate limiting (see API spec §5).
