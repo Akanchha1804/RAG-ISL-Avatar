@@ -6,6 +6,9 @@ name: CI
 # The Unity PlayMode probes (ISL-3D Avatar/Assets/Tests) are deliberately not
 # here: they need a Unity editor plus a licence in batch mode, so they stay a
 # local check. Everything that can run headless does.
+#
+# The docker job exists because neither image had ever been built in CI: a
+# Dockerfile that no job builds is documentation, not a deployable image.
 
 on:
   push:
@@ -88,3 +91,89 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  docker:
+    name: Docker images build + smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      # BuildKit + GHA layer cache: the pip layer is ~2 GB and only changes
+      # when requirements.txt changes, so the common push restores it.
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Validate compose file
+        run: docker compose config -q
+
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          load: true
+          tags: isl-backend:ci
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=min,scope=backend
+
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          file: frontend/Dockerfile
+          load: true
+          tags: isl-frontend:ci
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=min,scope=frontend
+
+      # A build only proves pip/npm resolved. Start the image the way it will
+      # run: no models warmed, no database, empty landmark dir. Health must
+      # still answer and the VRM copied in by the Dockerfile must be served.
+      - name: Smoke-test backend
+        run: |
+          set -euo pipefail
+          docker run -d --name isl-backend -p 8010:8000 \
+            -e ISL_WARMUP_MODELS=0 isl-backend:ci
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8010/api/health -o /tmp/health.json; then
+              break
+            fi
+            if [ "$i" -eq 60 ]; then
+              echo "backend did not become healthy"
+              docker logs isl-backend
+              exit 1
+            fi
+            sleep 2
+          done
+          jq -e '.status == "healthy" and .paths.vrm_model.exists' /tmp/health.json
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8010/avatar/model.vrm)" = 200
+
+      # nginx resolves `backend` while loading its config, so a host entry is
+      # enough to get it up; only the static app is exercised here.
+      - name: Smoke-test frontend
+        run: |
+          set -euo pipefail
+          docker run -d --name isl-frontend -p 8080:80 \
+            --add-host backend:127.0.0.1 isl-frontend:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8080/ -o /tmp/index.html; then
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "frontend did not serve"
+              docker logs isl-frontend
+              exit 1
+            fi
+            sleep 2
+          done
+          grep -q "ISL Avatar Translator" /tmp/index.html
+
+      - name: Container logs
+        if: failure()
+        run: |
+          docker logs isl-backend 2>&1 | tail -50 || true
+          docker logs isl-frontend 2>&1 | tail -20 || true
+
+      - name: Stop containers
+        if: always()
+        run: docker rm -f isl-backend isl-frontend || true
