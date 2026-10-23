@@ -15,6 +15,20 @@ export default function GlossDisplay({ result }) {
   const similarity =
     typeof result.similarity === 'number' ? result.similarity : null;
 
+  // Composed playback signs one clip per gloss. A gloss whose entry has no
+  // landmark clip is not signed at all (the avatar filters it out), so say so
+  // instead of leaving the viewer to notice a missing word. Sentence-level
+  // playback covers every token with one clip, so this counter only applies
+  // when the playlist drives the avatar.
+  const composed = !result.landmark_url
+    && Array.isArray(result.animation?.clip_playlist);
+  const signedCount = composed
+    ? result.animation.clip_playlist.filter((c) => c && c.landmark_clip_url).length
+    : 0;
+  const missing = Array.isArray(result.animation?.unsupported_tokens)
+    ? result.animation.unsupported_tokens
+    : [];
+
   return (
     <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
       <h3 className="font-semibold text-white">Translation Result</h3>
@@ -103,6 +117,15 @@ export default function GlossDisplay({ result }) {
       )}
 
       <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
+        {composed && glosses.length > 0 && (
+          <span
+            className={signedCount >= glosses.length ? 'text-emerald-300' : 'text-amber-300'}
+          >
+            {signedCount >= glosses.length
+              ? `Signed all ${glosses.length} glosses`
+              : `Signed ${signedCount} of ${glosses.length} glosses`}
+          </span>
+        )}
         {result.method && <span>Method: {result.method}</span>}
         {result.landmark_file && <span>Landmarks: {result.landmark_file}</span>}
         {result.animation?.retrieval_detail && (
@@ -114,15 +137,14 @@ export default function GlossDisplay({ result }) {
         {Array.isArray(result.animation?.unresolved_tokens) &&
           result.animation.unresolved_tokens.length > 0 && (
             <span className="text-amber-300">
-              Unresolved glosses: {result.animation.unresolved_tokens.length}
+              Not in vocabulary: {result.animation.unresolved_tokens.join(', ')}
             </span>
           )}
-        {Array.isArray(result.animation?.unsupported_tokens) &&
-          result.animation.unsupported_tokens.length > 0 && (
-            <span className="text-amber-300">
-              No clip for: {result.animation.unsupported_tokens.join(', ')}
-            </span>
-          )}
+        {missing.length > 0 && (
+          <span className="text-amber-300">
+            Not signed (no motion yet): {missing.join(', ')}
+          </span>
+        )}
         {result.animation?.suggestions &&
           Object.keys(result.animation.suggestions).length > 0 && (
             <span className="text-slate-400">

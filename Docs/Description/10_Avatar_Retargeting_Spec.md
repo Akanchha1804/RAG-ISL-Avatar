@@ -96,6 +96,13 @@ volume, not the wrist point.
    a hold and are removed from the data by
    `ISL_MediaPipe/clean_landmarks.py` (R4), so playback continues on the next
    detected pose instead of freezing.
+9. **Coarticulate, do not reset, between glosses.** A composed sentence plays
+   one clip per gloss. Passing through the arms-down idle at every boundary
+   reads as a list of words, so the web player crossfades directly into the
+   next clip when the hands do not jump (`SWITCH_JUMP_MAX`, 88% of the
+   curated boundaries) and only passes through the idle at a sentence edge or
+   after a large jump. The composed sentence then reads as continuous
+   signing rather than a sequence of isolated signs.
 
 ## Normative constants
 
@@ -146,6 +153,11 @@ These look like they belong in the table above and do not:
 - **Finger relax.** The web also eases the idle hand's wrist and fingers back
   to rest, because its playback model can leave a fist from the previous
   clip; Unity's per-frame hand application overwrites them anyway.
+- **Clip-switch blending.** The web player crossfades between the clips of a
+  composed sentence (`BLEND_LOOP_S`, `BLEND_SWITCH_S`, `SWITCH_JUMP_MAX`) and
+  else passes through the idle; Unity applies each clip's frames straight into
+  the same smoothed IK, so it has no clip-boundary pose to blend. The semantic
+  that matters - arms do not reset to the idle between words - is the same.
 
 ## Changing a value
 
