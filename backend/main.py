@@ -141,7 +141,23 @@ app.add_middleware(
 )
 
 if LANDMARKS_DIR.exists():
-    app.mount("/landmarks", StaticFiles(directory=str(LANDMARKS_DIR)), name="landmarks")
+
+    class LandmarkFiles(StaticFiles):
+        """Landmark JSONs, always revalidated with the server.
+
+        Clips are rewritten in place by `ISL_MediaPipe/clean_landmarks.py` and
+        added by batch jobs. A browser that heuristically cached one kept
+        signing the stale motion after a data fix, so these responses carry
+        `Cache-Control: no-cache`: the ETag still turns an unchanged file into
+        a 304, but a changed one is always re-read.
+        """
+
+        async def get_response(self, path, scope):
+            response = await super().get_response(path, scope)
+            response.headers["Cache-Control"] = "no-cache"
+            return response
+
+    app.mount("/landmarks", LandmarkFiles(directory=str(LANDMARKS_DIR)), name="landmarks")
 else:
     print(
         "[Startup][ERROR] Landmarks directory not found - /landmarks disabled. "

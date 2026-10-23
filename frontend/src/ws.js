@@ -28,11 +28,14 @@ function clearReconnectTimer() {
 
 function scheduleReconnect() {
   clearReconnectTimer();
+  // Resolve the delay here: referencing it inside the callback (where it was
+  // previously declared) left it undefined at the setTimeout call and threw
+  // "delay is not defined" on every reconnect.
+  const delay = backoff;
+  backoff = Math.min(backoff * 2, MAX_BACKOFF_MS);
+  console.log(`[WS] Reconnecting in ${delay}ms...`);
   reconnectTimer = setTimeout(() => {
     reconnectTimer = null;
-    const delay = backoff;
-    backoff = Math.min(backoff * 2, MAX_BACKOFF_MS);
-    console.log(`[WS] Reconnecting in ${delay}ms...`);
     ensureSocket();
   }, delay);
 }
