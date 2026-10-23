@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import VrmAvatar from './VrmAvatar';
+import { animatedClips } from '../avatar/playback';
 
 const CONNECTIONS = [
   [0, 1], [1, 2], [2, 3], [3, 4],
@@ -53,13 +54,7 @@ export default function AvatarView({ landmarkUrl, animation, glossSequence }) {
   // fallback (a missing model file will not heal between translations).
   const [vrmFailed, setVrmFailed] = useState(false);
 
-  const clips = useMemo(
-    () =>
-      Array.isArray(animation?.clip_playlist)
-        ? animation.clip_playlist.filter((c) => c && c.landmark_clip_url)
-        : [],
-    [animation],
-  );
+  const clips = useMemo(() => animatedClips(animation), [animation]);
 
   useEffect(() => {
     if (!landmarkUrl) return undefined;

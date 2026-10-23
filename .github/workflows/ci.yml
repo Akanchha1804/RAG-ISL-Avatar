@@ -68,7 +68,9 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          # 24, not 22: vitest 5 needs >=22.12 and jsdom 30 needs >=22.22.2,
+          # and 24 is the runtime the suite is green on locally.
+          node-version: "24"
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
@@ -78,6 +80,11 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      # Playback/coverage/reconnect logic has no renderer or network
+      # dependency, so it runs here in jsdom.
+      - name: Test
+        run: npm test
 
       - name: Build
         run: npm run build

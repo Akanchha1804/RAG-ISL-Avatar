@@ -3,6 +3,10 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VRMLoaderPlugin } from '@pixiv/three-vrm';
 import { apiUrl } from '../config';
+import {
+  clipSwitchJump,
+  expressionTargetsFor,
+} from '../avatar/playback';
 
 // Test/debug hooks (`HOOKS.__vrm`, `__vrmAdvance`, `__vrmPen`, `__vrmShot`,
 // ...) let the retargeting be asserted from a browser: scene state, cross
@@ -491,24 +495,6 @@ const _tmpQ = new THREE.Quaternion();
 const _tmpV = new THREE.Vector3();
 const _tmpV2 = new THREE.Vector3();
 
-// ISL non-manual markers driven from the gloss sequence (M6 fix): faces
-// carry question/negation grammar that hands alone cannot express.
-// WH-words -> brow raise (VRM 'surprised'); negation -> brow furrow
-// (VRM 'angry' at a low, non-emotional weight). Eased in while signing,
-// released at rest. Display-only grammar channel; never affects glosses.
-const WH_GLOSSES = new Set(['WHAT', 'WHEN', 'WHERE', 'WHO', 'WHOM', 'WHOSE', 'WHICH', 'WHY', 'HOW']);
-const NEG_GLOSSES = new Set(['NOT', 'NO', 'NEVER', 'DONOT', 'DONT', 'CANNOT']);
-
-function expressionTargetsFor(glossSequence) {
-  const toks = Array.isArray(glossSequence)
-    ? glossSequence.map((g) => String(g).toUpperCase())
-    : [];
-  return {
-    surprised: toks.some((t) => WH_GLOSSES.has(t)) ? 0.55 : 0,
-    angry: toks.some((t) => NEG_GLOSSES.has(t)) ? 0.35 : 0,
-  };
-}
-
 export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, onError }) {
   const mountRef = useRef(null);
   const onErrorRef = useRef(null);
@@ -882,27 +868,8 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       (st.neutral && st.neutral[key]) || entry.restLocal
     );
 
-    // Distance the hands travel from the current clip's last applied frame to
-    // the next clip's first frame, in normalised image space. Worst side wins.
-    const clipSwitchJump = (nextDs) => {
-      const frame = nextDs && nextDs.frames && nextDs.frames[0];
-      if (!frame || !st.lastWrist) return Infinity;
-      const next = {};
-      for (const hand of frame.hands || []) {
-        if (!hand.landmarks || hand.landmarks.length !== 21) continue;
-        const w = hand.landmarks[0];
-        const side = w.x > 0.5 ? 'left' : 'right';
-        if (!next[side]) next[side] = w;
-      }
-      let jump = 0;
-      for (const side of ['left', 'right']) {
-        const a = st.lastWrist[side];
-        const b = next[side];
-        if (a && b) jump = Math.max(jump, Math.hypot(a.x - b.x, a.y - b.y));
-      }
-      return jump;
-    };
-
+    // Distance the hands travel into the next clip is measured by
+    // clipSwitchJump() in ../avatar/playback (tested without a renderer).
     const updateBlend = (dt) => {
       const b = st.blend;
       if (!b || st.probe) return;
@@ -1533,8 +1500,10 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
             const nextDs = isPlaylist
               ? st.playlist[st.playIndex % st.playlist.length]
               : ds;
+            const jump = clipSwitchJump(
+              st.lastWrist, nextDs && nextDs.frames && nextDs.frames[0]);
             beginBlend(isPlaylist
-              ? (wrapped || clipSwitchJump(nextDs) > SWITCH_JUMP_MAX)
+              ? (wrapped || jump > SWITCH_JUMP_MAX)
               : false);
           }
           advanced = true;

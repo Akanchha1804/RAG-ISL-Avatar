@@ -24,6 +24,10 @@ cd backend
 pytest -q          # full suite: API, pipeline, retrieval, eval metrics,
                    # path resolution, landmark hygiene and web/Unity
                    # retargeting conformance
+
+cd ../frontend
+npm test           # vitest + jsdom: playback helpers, coverage panel,
+                   # websocket reconnect
 ```
 
 The metrics tests and the eval harnesses additionally need the WordNet

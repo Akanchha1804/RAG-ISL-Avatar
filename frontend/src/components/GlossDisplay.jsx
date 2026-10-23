@@ -1,3 +1,5 @@
+import { signedCoverage } from '../avatar/playback';
+
 export default function GlossDisplay({ result }) {
   if (!result) return null;
 
@@ -20,14 +22,9 @@ export default function GlossDisplay({ result }) {
   // instead of leaving the viewer to notice a missing word. Sentence-level
   // playback covers every token with one clip, so this counter only applies
   // when the playlist drives the avatar.
-  const composed = !result.landmark_url
-    && Array.isArray(result.animation?.clip_playlist);
-  const signedCount = composed
-    ? result.animation.clip_playlist.filter((c) => c && c.landmark_clip_url).length
-    : 0;
-  const missing = Array.isArray(result.animation?.unsupported_tokens)
-    ? result.animation.unsupported_tokens
-    : [];
+  const coverage = signedCoverage(
+    glosses, result.animation, result.landmark_url);
+  const { composed, signed: signedCount, missing } = coverage;
 
   return (
     <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
