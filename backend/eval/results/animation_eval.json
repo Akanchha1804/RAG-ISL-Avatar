@@ -1,8 +1,21 @@
 {
  "locked_refs": false,
  "n_tokens": 328,
+ "n_landmark_hits": 288,
+ "n_missing_landmark": 40,
  "clip_hit_rate": 0.8963,
  "per_token_landmark_hit_rate": 0.878,
+ "refs": {
+  "total": 101,
+  "fully_animated": 68,
+  "partially_animated": 32,
+  "not_animated": 1
+ },
+ "vocabulary": {
+  "size": 4765,
+  "animated_glosses": 184,
+  "animated_share": 0.0386
+ },
  "missing_clip_top": [
   [
    "INTO",

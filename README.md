@@ -155,17 +155,21 @@ the pipeline can gloss. Numbers come from `backend/eval/results/` and
 | | |
 |---|---|
 | Curated corpus sentences (what RAG can retrieve) | 101 |
+| Sentences signable end to end with per-gloss clips | **68** (32 partial, 1 none) |
 | Per-gloss landmark clips | 184 |
 | Landmark files total (incl. sentence-level) | 288 |
 | Tokens in the 101-sentence corpus with per-token motion | **87.8%** |
 | Tokens with CISLR reference footage | 89.3% |
-| CISLR gloss vocabulary | 4,764 |
+| CISLR gloss vocabulary | 4,765 |
 
-So the corpus is covered well, but the *vocabulary* is not: 184 of 4,764
+So the corpus is covered well, but the *vocabulary* is not: 184 of 4,765
 glosses (3.9%) carry motion. Input that resolves onto a corpus sentence plays
 in full; a generated gloss outside those tokens is reported as unsupported
-rather than silently skipped (`_playable` in `retrieval.py`). The missing-token
-backlog is `missing_landmark_top` in `animation_eval.json`.
+rather than silently skipped (`_playable` in `retrieval.py`), and the result
+panel now says `Signed N of M glosses` and names the words with no motion.
+The missing-token backlog is `missing_landmark_top` in
+`animation_eval.json`. `backend/tests/test_coverage_gate.py` fails if any of
+these numbers drops.
 
 The CISLR videos behind `/clips` (10 GB) and the Flan-T5 weights are not
 checked in, so a fresh clone runs without reference footage and with
