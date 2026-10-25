@@ -147,6 +147,14 @@ These look like they belong in the table above and do not:
 - **Web-only reactive tuning.** `SMOOTHNESS`, `FLEX_LIMITS` and
   `ELBOW_MAX_RAD` serve the browser's per-frame interpolation and are not part
   of the shared geometry.
+- **Render-rate sampling.** Clip files carry 25/30 Hz landmarks. The web
+  samples between adjacent frames (`interpolateFrame`, with a `HAND_MATCH_MAX`
+  of 0.25 normalised units) and solves the retargeter on every rendered frame,
+  applying `SMOOTHNESS` at that rate too. Holding the last solved pose until
+  the next clip frame strobes on a 60 Hz display; a hand pair farther apart
+  than the match radius is a cut, not motion, and is not blended. Unity still
+  applies one clip frame per render, so the rate mismatch remains there until
+  its player samples landmarks the same way.
 - **Idle convergence budget.** The web converges the idle by iterating the
   smoothed IK (`IDLE_SETTLE_STEPS`); Unity solves it once with smoothing
   bypassed. Same pose, different route.

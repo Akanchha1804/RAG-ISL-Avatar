@@ -4,6 +4,7 @@ import {
   animatedClips,
   clipSwitchJump,
   expressionTargetsFor,
+  interpolateFrame,
   signedCoverage,
 } from './playback';
 
@@ -75,6 +76,65 @@ describe('clipSwitchJump', () => {
   it('is Infinity when there is no history or no next frame', () => {
     expect(clipSwitchJump(undefined, frame(hand(0.4)))).toBe(Infinity);
     expect(clipSwitchJump(lastWrist, null)).toBe(Infinity);
+  });
+});
+
+describe('interpolateFrame', () => {
+  it('samples the midpoint between two clip frames', () => {
+    const a = { ...frame(hand(0.2, 0.4), hand(0.8, 0.6)), timestamp_ms: 1000 };
+    const b = { ...frame(hand(0.4, 0.4), hand(0.6, 0.6)), timestamp_ms: 1040 };
+
+    const mid = interpolateFrame(a, b, 0.5);
+
+    expect(mid.hands[0].landmarks[0].x).toBeCloseTo(0.3, 6);
+    expect(mid.hands[1].landmarks[0].x).toBeCloseTo(0.7, 6);
+    expect(mid.hands[0].landmarks[5].x).toBeCloseTo(0.305, 6);
+    expect(mid.timestamp_ms).toBe(1020);
+  });
+
+  it('pairs hands by nearest wrist, not by detection order', () => {
+    const a = {
+      ...frame({ ...hand(0.2), handedness: 'Left' }, hand(0.8)),
+    };
+    // The next frame lists the same hands in the opposite order.
+    const b = frame(hand(0.6), hand(0.4));
+
+    const mid = interpolateFrame(a, b, 0.5);
+
+    expect(mid.hands[0].landmarks[0].x).toBeCloseTo(0.3, 6);
+    expect(mid.hands[0].handedness).toBe('Left');
+    expect(mid.hands[1].landmarks[0].x).toBeCloseTo(0.7, 6);
+  });
+
+  it('does not smear across a real cut', () => {
+    const a = frame(hand(0.1));
+    const b = frame(hand(0.9));
+
+    const mid = interpolateFrame(a, b, 0.5);
+
+    expect(mid.hands[0].landmarks[0].x).toBeCloseTo(0.1, 6);
+  });
+
+  it('holds a hand that only exists in one of the frames', () => {
+    const a = frame(hand(0.2), hand(0.8));
+    const b = frame(hand(0.22));
+
+    const mid = interpolateFrame(a, b, 0.5);
+
+    expect(mid.hands[0].landmarks[0].x).toBeCloseTo(0.21, 6);
+    expect(mid.hands[1].landmarks[0].x).toBeCloseTo(0.8, 6);
+  });
+
+  it('passes through at the end points and tolerates missing input', () => {
+    const a = frame(hand(0.2));
+    const b = frame(hand(0.4));
+
+    expect(interpolateFrame(a, b, 0)).toBe(a);
+    expect(interpolateFrame(a, b, 1).hands[0].landmarks[0].x).toBeCloseTo(0.4, 6);
+    expect(interpolateFrame(a, b, 2).hands[0].landmarks[0].x).toBeCloseTo(0.4, 6);
+    expect(interpolateFrame(a, null, 0.5)).toBe(a);
+    expect(interpolateFrame(null, b, 0.5)).toBe(b);
+    expect(interpolateFrame(a, frame(), 0.5)).toBe(a);
   });
 });
 

@@ -6,6 +6,7 @@ import { apiUrl, resolveUrl } from '../config';
 import {
   clipSwitchJump,
   expressionTargetsFor,
+  interpolateFrame,
 } from '../avatar/playback';
 
 // Test/debug hooks (`HOOKS.__vrm`, `__vrmAdvance`, `__vrmPen`, `__vrmShot`,
@@ -1485,7 +1486,6 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         const fps = ds.fps > 0 ? ds.fps : 25;
         st.frameTimer += dt;
         const frameDuration = 1 / fps;
-        let advanced = false;
         while (st.frameTimer >= frameDuration) {
           st.frameTimer -= frameDuration;
           st.frameIndex += 1;
@@ -1506,12 +1506,23 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
               ? (wrapped || jump > SWITCH_JUMP_MAX)
               : false);
           }
-          advanced = true;
         }
-        if (advanced || st.frameTimer === dt) {
-          applyFrame(ds.frames[st.frameIndex], dt, ds.calib || null);
-        }
+        // Solve the retargeter every rendered frame. The clip only has a new
+        // frame at 25/30 Hz; holding the previous pose until then makes the
+        // motion strobe on a 60 Hz display. Sample between the two frames so
+        // the targets move continuously, and smooth at the render rate too.
+        const frame = ds.frames[st.frameIndex];
+        const next = st.frameIndex + 1 < ds.frames.length
+          ? ds.frames[st.frameIndex + 1]
+          : null;
+        const alpha = frameDuration > 0 ? st.frameTimer / frameDuration : 0;
+        const solveStart = import.meta.env.DEV ? performance.now() : 0;
+        applyFrame(interpolateFrame(frame, next, alpha), dt, ds.calib || null);
         updateBlend(dt);
+        if (import.meta.env.DEV) {
+          st.solveMs = (st.solveMs || 0) * 0.9
+            + (performance.now() - solveStart) * 0.1;
+        }
       } else if (!st.probe && st.resetting && st.vrm) {
         // No sequence: relax back to the neutral pose (arms down, not the
         // model's T-pose rest).
@@ -1593,6 +1604,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           rw: rw ? rw.node.quaternion.toArray() : null,
           rf: rf ? rf.node.quaternion.toArray() : null,
           ticks: st.ticks || 0,
+          solveMs: st.solveMs ? +st.solveMs.toFixed(2) : 0,
           loadId: st.loadId || 0,
           blend: st.blend ? +st.blend.t.toFixed(2) : -1,
           claspAdj: st.claspAdj || null,
