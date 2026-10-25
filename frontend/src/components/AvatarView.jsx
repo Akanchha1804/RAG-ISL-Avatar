@@ -45,7 +45,7 @@ function makeProjector(bounds, width, height) {
   return (lm) => ({ x: lm.x * scale + offsetX, y: lm.y * scale + offsetY });
 }
 
-export default function AvatarView({ landmarkUrl, animation, glossSequence }) {
+export default function AvatarView({ landmarkUrl, animation, glossSequence, onSourceInfo }) {
   const canvasRef = useRef(null);
   // { url, data, bounds, status, error } - keyed by the URL it belongs to so
   // a stale response can never overwrite a newer one.
@@ -194,6 +194,7 @@ export default function AvatarView({ landmarkUrl, animation, glossSequence }) {
           playlistUrls={landmarkUrl ? [] : clips.map((c) => c.landmark_clip_url)}
           glossSequence={glossSequence}
           onError={() => setVrmFailed(true)}
+          onSourceInfo={onSourceInfo}
         />
         {!landmarkUrl && clips.length === 0 && (
           <span className="text-xs text-slate-400">No animation available</span>

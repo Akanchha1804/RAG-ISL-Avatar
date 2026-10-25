@@ -29,6 +29,7 @@ const stageLabel = {
 
 function App() {
   const [result, setResult] = useState(null);
+  const [sourceInfo, setSourceInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [mode, setMode] = useState('text');
@@ -112,6 +113,7 @@ function App() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setSourceInfo(null);
     setPipelineStage('transcribing');
     timeoutRef.current = setTimeout(() => {
       fail('The request timed out. Is the backend running? See the README quick start.');
@@ -177,7 +179,11 @@ function App() {
         <header className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2">ISL Avatar Translator</h1>
           <p className="text-blue-300">
-            English or Hindi in. Indian Sign Language out, signed by a 3D avatar.
+            English or Hindi in. ISL glosses and 3D avatar playback out.
+          </p>
+          <p className="mt-1 text-xs text-slate-400">
+            Recorded sentence clips first. Novel sentences use experimental
+            gloss-by-gloss playback — not fluent ISL.
           </p>
           <p className="mt-1 text-xs uppercase tracking-widest text-slate-400">
             Retrieval-augmented glossing · Flan-T5 · VRM retargeting
@@ -275,12 +281,12 @@ function App() {
               )}
             </div>
 
-            <GlossDisplay result={result} />
+            <GlossDisplay result={result} sourceInfo={sourceInfo} />
           </div>
 
           <div className="bg-white/10 backdrop-blur rounded-xl p-6">
             <h2 className="text-lg font-semibold mb-4 text-center">Avatar Viewport</h2>
-            <AvatarView landmarkUrl={result?.landmark_url || null} animation={result?.animation || null} glossSequence={result?.gloss_sequence || null} />
+            <AvatarView landmarkUrl={result?.landmark_url || null} animation={result?.animation || null} glossSequence={result?.gloss_sequence || null} onSourceInfo={setSourceInfo} />
           </div>
         </div>
       </div>

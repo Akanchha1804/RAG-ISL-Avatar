@@ -1,6 +1,6 @@
 # RAG-ISL-Avatar
 
-**English or Hindi in. Indian Sign Language out — signed by a 3D avatar.**
+**English or Hindi in. ISL glosses and 3D avatar playback out.**
 
 [![CI](https://github.com/Akanchha1804/RAG-ISL-Avatar/actions/workflows/ci.yml/badge.svg)](https://github.com/Akanchha1804/RAG-ISL-Avatar/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -14,6 +14,12 @@ fine-tuned Flan-T5 second — and retargets recorded sign motion onto a VRM
 avatar. It reports what it could *not* sign instead of dropping words, and the
 whole stack runs on CPU.
 
+The defensible capability is **recorded sentence retrieval and replay**. Novel
+sentences fall back to **experimental gloss-by-gloss playback**: isolated
+recorded signs in sequence, not a fluent ISL translation. This is a demo, not
+a substitute for a human interpreter, and it has not been validated with Deaf
+signers.
+
 ## 60-second demo
 
 1. **Windows:** double-click `start-dev.bat`. It picks a free port, waits for
@@ -23,8 +29,9 @@ whole stack runs on CPU.
    `hi how are you` · `help me` · `do not worry` · `are you free today` ·
    `can you repeat that please` · `congratulations` · `सुप्रभात`
 3. Follow the panel: input → `TRANSLATED (HI → EN)` (Hindi only) → ISL glosses
-   in ISL order → avatar. The Hindi chip also shows the per-gloss playback path
-   and its `Signed all N glosses` coverage line; a curated sentence plays its
+   in ISL order → avatar. The result panel says whether it is replaying a
+   `Recorded sentence clip` or the `Experimental gloss playback` path. The
+   Hindi chip uses the composed path; a curated sentence plays its
    sentence-level capture instead.
 4. Optional: switch to **Voice Input** and say "good morning". The first voice
    request loads Whisper on CPU (~20 s); later ones are quick.
@@ -38,7 +45,9 @@ What the demo shows:
 - **Non-manual markers:** WH questions raise the brows, negation furrows them,
   timed to the sign they accompany rather than the whole clip.
 - **Honest coverage:** when a gloss has no recorded motion the panel says
-  `Signed 2 of 3 glosses` and names the missing word.
+  `Playing 2 of 3 gloss clips` and names the missing word.
+- **Honest sourcing:** composed playback is labelled experimental, and
+  one-handed source clips say so instead of hiding the resting hand.
 - **Coarticulation:** back-to-back clips crossfade at the wrist when the jump is
   small, with a neutral pass at sentence edges.
 
@@ -78,14 +87,30 @@ The long version (and the data-repair story behind the landmarks) is in
 | Works | Not yet |
 |---|---|
 | English + Hindi text; English speech | Languages other than Hindi/English |
-| 101 curated sentences; **68 sign end to end** | Only **184 of 4,765** glosses (3.9%) have motion |
-| Per-gloss playback for novel sentences, with named misses | Fingerspelling unknown words — needs signer-verified handshapes |
+| 101 curated sentences; **68/101 fully covered by recorded motion** | Only **184 of 4,765** glosses (3.9%) have motion |
+| **Recorded sentence playback** (one source clip) | Composed playback is experimental — isolated clips, not fluent ISL |
+| Experimental per-gloss playback, with named misses | Fingerspelling unknown words — needs signer-verified handshapes |
 | NMM (brow raise/furrow) timed per gloss | Full ISL grammar/word-order rules — needs signer validation |
+| One-handed sources replay faithfully and are labelled | Two-handed output for a one-handed source — that would invent signs |
 | Clip crossfades and dropout holds | Reference footage is 10 GB and is not checked in |
 | Web avatar + Unity scene | Unity scene base URL is configurable but unset; no PlayMode CI |
-| History via Postgres, degrades gracefully without it | No auth or rate limiting in demo scope |
+| History via Postgres, degrades gracefully without it | No auth or rate limiting in demo scope; no Deaf comprehension study |
 
 The coverage table below has the exact numbers and how to reproduce them.
+
+### Scope and limits
+
+- **Not fluent ISL.** Composed playback concatenates isolated gloss clips. It
+  does not add ISL grammar, spatial agreement, or non-manual grammar beyond the
+  timed brow raise/furrow.
+- **One-handed source clips.** Many recorded signs use one hand; the signer's
+  other hand rests at the hip. The avatar copies the source and the panel
+  labels it. Making the resting hand sign would invent language.
+- **Not validated with Deaf signers.** There has been no comprehension study;
+  treat the output as a visualisation of retrieved sign footage, not an
+  accessibility substitute.
+- **Coverage is partial.** 68 of 101 curated sentences are fully covered; a
+  novel sentence may play only some of its gloss clips.
 
 ## Quick start
 

@@ -27,13 +27,13 @@ function composedResult(overrides = {}) {
 }
 
 describe('GlossDisplay coverage', () => {
-  it('says how many glosses are signed and names the rest', () => {
+  it('says how many gloss clips play and names the rest', () => {
     render(<GlossDisplay result={composedResult()} />);
-    expect(screen.getByText('Signed 1 of 2 glosses')).toBeTruthy();
+    expect(screen.getByText('Playing 1 of 2 gloss clips')).toBeTruthy();
     expect(screen.getByText('Not signed (no motion yet): MORNING')).toBeTruthy();
   });
 
-  it('says all glosses are signed when every clip has motion', () => {
+  it('says all gloss clips play when every clip has motion', () => {
     render(
       <GlossDisplay
         result={composedResult({
@@ -45,7 +45,7 @@ describe('GlossDisplay coverage', () => {
         })}
       />,
     );
-    expect(screen.getByText('Signed all 2 glosses')).toBeTruthy();
+    expect(screen.getByText('Playing all 2 gloss clips')).toBeTruthy();
     expect(screen.queryByText(/Not signed/)).toBeNull();
   });
 
@@ -59,7 +59,26 @@ describe('GlossDisplay coverage', () => {
         })}
       />,
     );
-    expect(screen.queryByText(/^Signed /)).toBeNull();
+    expect(screen.queryByText(/^Playing /)).toBeNull();
+    expect(screen.getByText(/Recorded sentence clip/)).toBeTruthy();
+  });
+
+  it('labels composed playback as experimental, not fluent ISL', () => {
+    render(<GlossDisplay result={composedResult()} />);
+    expect(screen.getByText(/Experimental gloss playback/)).toBeTruthy();
+    expect(screen.getByText(/not a fluent ISL translation/)).toBeTruthy();
+  });
+
+  it('explains when the recorded source uses one hand', () => {
+    render(
+      <GlossDisplay
+        result={composedResult()}
+        sourceInfo={{ mode: 'composed', clips: 2, oneHandedClips: 2, oneHanded: true }}
+      />,
+    );
+    expect(
+      screen.getByText('2 of 2 source clips are largely one-handed; the other hand rests or holds.'),
+    ).toBeTruthy();
   });
 
   it('names tokens that are not in the vocabulary', () => {
@@ -76,7 +95,7 @@ describe('GlossDisplay coverage', () => {
         })}
       />,
     );
-    expect(screen.getByText(/Signed 1 of 2 glosses/)).toBeTruthy();
+    expect(screen.getByText(/Playing 1 of 2 gloss clips/)).toBeTruthy();
     expect(screen.getByText('Not in vocabulary: Rahul')).toBeTruthy();
   });
 

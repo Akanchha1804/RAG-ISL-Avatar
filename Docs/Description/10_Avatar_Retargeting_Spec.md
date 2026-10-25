@@ -82,10 +82,15 @@ volume, not the wrist point.
    implementation solves the same two-bone IK once at setup towards a wrist
    target beside the body (`IDLE_LATERAL` outward, `IDLE_DROP` down,
    `IDLE_FWD` forward, all relative to the shoulder and the arm length) and
-   keeps the resulting upper/forearm rotations. A side with no landmarks this
-   frame eases to that pose rather than freezing wherever the previous clip
-   left it, and the web's clip-switch blend passes through it instead of the
-   rest pose (which popped both arms out to a T-pose between glosses).
+   keeps the resulting upper/forearm rotations. The forward offset puts the
+   resting hand just in front of the thigh with a slight elbow bend, so it
+   reads as relaxed rather than pinned to the hip. A side with no landmarks
+   this frame eases to that pose rather than freezing wherever the previous
+   clip left it, and the web's clip-switch blend passes through it instead of
+   the rest pose (which popped both arms out to a T-pose between glosses).
+   Many corpus signs are one-handed; this idle reproduces the signer's resting
+   hand and does not invent motion for it. The result panel labels those
+   source clips.
 8. **Hold through dropouts, then idle.** A hand does not disappear for one
    frame because the sign ended: the tracker loses it. Short holes are
    bridged by holding that arm's last pose for `HAND_GAP_HOLD` seconds; only a
@@ -125,9 +130,9 @@ Every value below must be identical in
 | `CLASP_MIN_SCALE` | 0.35 | floor on the contact-assist scale factor |
 | `HAND_MERGE_DIST` | 0.05 | wrist distance under which two detections are one hand (normalised image units) |
 | `SIDE_SWITCH_HYST` | 0.06 | margin by which the other arm must be nearer before it takes a hand over (normalised) |
-| `IDLE_LATERAL` | 0.1 | idle wrist outward offset from the shoulder (x arm length) |
-| `IDLE_DROP` | 0.8 | idle wrist drop below the shoulder (x arm length) |
-| `IDLE_FWD` | 0.12 | idle wrist forward offset from the shoulder (x arm length) |
+| `IDLE_LATERAL` | 0.09 | idle wrist outward offset from the shoulder (x arm length) |
+| `IDLE_DROP` | 0.78 | idle wrist drop below the shoulder (x arm length) |
+| `IDLE_FWD` | 0.16 | idle wrist forward offset from the shoulder (x arm length) |
 | `HAND_GAP_HOLD` | 0.5 | seconds a missing hand keeps its last pose before the arm eases to idle |
 
 ## Deliberately not shared

@@ -1,6 +1,6 @@
 import { signedCoverage } from '../avatar/playback';
 
-export default function GlossDisplay({ result }) {
+export default function GlossDisplay({ result, sourceInfo }) {
   if (!result) return null;
 
   // Glosses arrive as a string from the API; tolerate an array too so a
@@ -25,10 +25,34 @@ export default function GlossDisplay({ result }) {
   const coverage = signedCoverage(
     glosses, result.animation, result.landmark_url);
   const { composed, signed: signedCount, missing } = coverage;
+  // Sentence-level playback is one recorded clip; a playlist is the
+  // experimental gloss-by-gloss path. Keep the distinction visible: the demo
+  // must not imply that isolated gloss clips add up to fluent ISL.
+  const mode = result.landmark_url ? 'sentence' : composed ? 'composed' : null;
 
   return (
     <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
       <h3 className="font-semibold text-white">Translation Result</h3>
+
+      {mode === 'sentence' && (
+        <div className="rounded border border-emerald-400/30 bg-emerald-400/10 p-2 text-xs text-emerald-200">
+          <span className="font-semibold">Recorded sentence clip.</span>{' '}
+          Replaying one recorded ISL sentence.
+        </div>
+      )}
+      {mode === 'composed' && (
+        <div className="rounded border border-amber-400/30 bg-amber-400/10 p-2 text-xs text-amber-200">
+          <span className="font-semibold">Experimental gloss playback.</span>{' '}
+          Separate recorded gloss clips, not a fluent ISL translation.
+        </div>
+      )}
+      {sourceInfo?.oneHanded && (
+        <p className="text-xs text-amber-300">
+          {sourceInfo.mode === 'composed'
+            ? `${sourceInfo.oneHandedClips} of ${sourceInfo.clips} source clips are largely one-handed; the other hand rests or holds.`
+            : 'One hand does most of the motion in this source clip; the other rests or holds.'}
+        </p>
+      )}
 
       {result.input_text && (
         <div>
@@ -124,16 +148,8 @@ export default function GlossDisplay({ result }) {
             className={signedCount >= glosses.length ? 'text-emerald-300' : 'text-amber-300'}
           >
             {signedCount >= glosses.length
-              ? `Signed all ${glosses.length} glosses`
-              : `Signed ${signedCount} of ${glosses.length} glosses`}
-          </span>
-        )}
-        {result.method && <span>Method: {result.method}</span>}
-        {result.landmark_file && <span>Landmarks: {result.landmark_file}</span>}
-        {result.animation?.retrieval_detail && (
-          <span>
-            Retrieval: {result.animation.retrieval_detail.level}
-            ({result.animation.retrieval_detail.store})
+              ? `Playing all ${glosses.length} gloss clips`
+              : `Playing ${signedCount} of ${glosses.length} gloss clips`}
           </span>
         )}
         {Array.isArray(result.animation?.unresolved_tokens) &&
@@ -157,6 +173,22 @@ export default function GlossDisplay({ result }) {
             </span>
           )}
       </div>
+
+      {(result.method || result.landmark_file || result.animation?.retrieval_detail) && (
+        <details className="text-xs text-slate-500">
+          <summary className="cursor-pointer text-slate-400">Technical details</summary>
+          <div className="mt-1 flex flex-wrap gap-4">
+            {result.method && <span>Method: {result.method}</span>}
+            {result.landmark_file && <span>Landmarks: {result.landmark_file}</span>}
+            {result.animation?.retrieval_detail && (
+              <span>
+                Retrieval: {result.animation.retrieval_detail.level}
+                ({result.animation.retrieval_detail.store})
+              </span>
+            )}
+          </div>
+        </details>
+      )}
     </div>
   );
 }
