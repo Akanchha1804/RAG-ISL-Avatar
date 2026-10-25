@@ -375,6 +375,34 @@ const handBackExtent = (st, side) => {
   return Math.max(0, Math.min(back, HAND_BACK_MAX));
 };
 
+// Deepest palm-vertex intrusion into the measured torso surface, in metres.
+// Mirrors the `__vrmPen` probe so the render loop can act on the same
+// measurement instead of trusting the pre-pose estimate. Returns 0 when the
+// hand is clear (or when there is no measured profile yet).
+const handPenetration = (st, side) => {
+  const prof = st.torsoProfile;
+  const pts = st.penPts && st.penPts[side];
+  if (!prof || !prof.frontZ || !pts || !pts.length) return 0;
+  const n = prof.frontZ.length;
+  let deepest = 0;
+  for (let i = 0; i < pts.length; i += 1) {
+    const p = pts[i];
+    _handV.set(p.x, p.y, p.z).applyMatrix4(p.b.matrixWorld);
+    const t = (_handV.y - prof.hipsY) / prof.axisLen;
+    if (t < 0 || t > 1) continue;
+    const f = t * (n - 1);
+    const bi = Math.min(n - 2, Math.max(0, Math.floor(f)));
+    const bk = f - bi;
+    const axisX = prof.hipsX + t * (prof.neckX - prof.hipsX);
+    const hx = prof.halfX[bi] * (1 - bk) + prof.halfX[bi + 1] * bk;
+    if (Math.abs(_handV.x - axisX) > hx) continue;
+    const fz = prof.frontZ[bi] * (1 - bk) + prof.frontZ[bi + 1] * bk;
+    const d = fz - _handV.z;
+    if (d > deepest) deepest = d;
+  }
+  return deepest;
+};
+
 // Signing-space calibration (M6 fix): source videos frame the signer
 // differently (waist-level vs chest-level), so absolute image coords
 // reproduce the wrong height on the avatar. Height (Y) and depth (Z) are
@@ -966,7 +994,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
     // adaptive pole (no flips on cross-body targets), torso-capsule
     // collision (no hands inside the chest), elbow hinge clamp (no
     // hyperextension), twist-locked upper arm (no free roll).
-    const applyArmAt = (side, target, dt) => {
+    const applyArmAt = (side, target, dt, snap = false, allowBend = true) => {
       const A = st.arm && st.arm[side];
       const C = st.chestPos;
       if (!A || !C) return;
@@ -978,7 +1006,20 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       }
       const toT = target.clone().sub(A.S);
       let dist = toT.length();
-      const maxReach = A.lenU + A.lenL - 0.02;
+      let maxReach = A.lenU + A.lenL - 0.02;
+      // A hand target low over the torso (belly/chest) is often at the edge
+      // of this avatar's short reach. A straight arm then lies against the
+      // body and the elbow/upper arm disappear into it. Keep a real elbow
+      // bend for those targets; the hand stays in front of the torso.
+      if (allowBend && st.torsoProfile) {
+        const surfR = torsoSurfaceAt(st.torsoProfile, target.y);
+        // Only hands well inside the torso silhouette need the extra elbow
+        // bend. A hand at the side of the waist is clear and must keep its
+        // natural reach (this also protects the built neutral/idle pose).
+        if (surfR && Math.abs(target.x - surfR.axisX) < surfR.halfX - 0.02) {
+          maxReach = Math.min(maxReach, (A.lenU + A.lenL) * 0.75);
+        }
+      }
       if (dist > maxReach) {
         dist = maxReach;
         target.copy(A.S).addScaledVector(toT.normalize(), dist);
@@ -1017,8 +1058,24 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       // the elbow folds naturally instead of flaring or flipping.
       const sideSign = side === 'left' ? 1 : -1;
       const cross = Math.min(1, Math.max(0, -sideSign * (target.x - C.x) / 0.3));
-      const pole = A.pole.clone()
-        .addScaledVector(_DOWN, cross * 0.8).normalize();
+      let pole = A.pole.clone()
+        .addScaledVector(_DOWN, cross * 0.8);
+      // A low hand target (belly/chest) otherwise parks the elbow behind the
+      // bust: the torso swallows the upper arm and the forearm crosses the
+      // body. For low targets, use a strongly outward pole so the elbow
+      // stays at the side and the forearm reads in front.
+      const low = allowBend
+        ? Math.min(1, Math.max(0, (C.y + 0.12 - target.y) / 0.3))
+        : 0;
+      if (low > 0.05) {
+        const out = A.S.clone().sub(C);
+        out.y = 0;
+        if (out.lengthSq() > 1e-8) {
+          const sidePole = out.normalize().multiplyScalar(1)
+            .add(new THREE.Vector3(0, -0.25, 0.15)).normalize();
+          pole.normalize().lerp(sidePole, low).normalize();
+        }
+      }
       const perp = pole.clone().addScaledVector(dirST, -pole.dot(dirST));
       if (perp.lengthSq() < 1e-8) perp.set(0, -1, 0);
       perp.normalize();
@@ -1079,14 +1136,18 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         qU = new THREE.Quaternion()
           .setFromUnitVectors(A.restDirU, upperDir).multiply(A.restWQU);
       }
-      smoothWithDt(A.upper.node, parentQU.invert().multiply(qU), dt);
+      const localU = parentQU.invert().multiply(qU);
+      if (snap) A.upper.node.quaternion.copy(localU);
+      else smoothWithDt(A.upper.node, localU, dt);
 
       A.lower.node.parent.updateWorldMatrix(true, false);
       const parentQL = new THREE.Quaternion();
       A.lower.node.parent.getWorldQuaternion(parentQL);
       const qL = new THREE.Quaternion()
         .setFromUnitVectors(A.restDirL, foreDir).multiply(A.restWQL);
-      smoothWithDt(A.lower.node, parentQL.invert().multiply(qL), dt);
+      const localL = parentQL.invert().multiply(qL);
+      if (snap) A.lower.node.quaternion.copy(localL);
+      else smoothWithDt(A.lower.node, localL, dt);
     };
 
     // Map a landmark wrist through the signing box and hand it to the IK.
@@ -1173,7 +1234,9 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         const target = idleWristTarget(side);
         if (!A || !target) continue;
         for (let i = 0; i < IDLE_SETTLE_STEPS; i += 1) {
-          applyArmAt(side, target, 1 / 60);
+          // The idle target is deliberately close to the torso side; the
+          // signing-arm bend heuristic must not drag it up onto the chest.
+          applyArmAt(side, target, 1 / 60, false, false);
         }
         idle[side] = {
           upper: A.upper.node.quaternion.clone(),
@@ -1184,6 +1247,42 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       }
       st.idle = idle;
       st.neutral = neutral;
+    };
+
+    // A new clip starts from its own first frame, not from wherever the
+    // previous clip left the arms. Holding the old pose for HAND_GAP_HOLD is
+    // correct for a tracking dropout mid-clip, but on a clip switch it leaves
+    // the old signing hand on the chest for half a second. Snap both arms to
+    // the built idle pose and clear the tracking history instead.
+    const snapArmsToIdle = () => {
+      if (!st.idle || !st.arm) return false;
+      for (const side of ['left', 'right']) {
+        const A = st.arm[side];
+        const idle = st.idle[side];
+        if (!A || !idle) continue;
+        A.upper.node.quaternion.copy(idle.upper);
+        A.lower.node.quaternion.copy(idle.lower);
+        const hand = st.bones[side + 'Hand'];
+        if (hand) hand.node.quaternion.copy(hand.restLocal);
+        for (const f of FINGERS) {
+          for (const j of ['Proximal', 'Intermediate', 'Distal']) {
+            const e = st.bones[side + f.key + j];
+            if (e) e.node.quaternion.copy(e.restLocal);
+          }
+        }
+        for (const j of THUMB_BONES) {
+          const e = st.bones[side + 'Thumb' + j];
+          if (e) e.node.quaternion.copy(e.restLocal);
+        }
+      }
+      st.gap = { left: HAND_GAP_HOLD + 1, right: HAND_GAP_HOLD + 1 };
+      st.lastWrist = {};
+      st.lastWristQ = {};
+      st.lastSingleSide = null;
+      st.claspAdj = null;
+      st.claspInfo = null;
+      if (st.vrm) st.vrm.scene.updateMatrixWorld(true);
+      return true;
     };
 
     const _DOWN = new THREE.Vector3(0, -1, 0);
@@ -1313,6 +1412,39 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         // Thumb saddle joint over-rotates: damp the metacarpal, soften tips.
         const damp = j === 0 ? 0.6 : (j === 2 ? 0.45 : 0.8);
         applyFingerBone(entry, seg(a, b), lmB, avB, dt, FLEX_LIMITS.ThumbDefault, damp, handDelta);
+      }
+
+      // The forward guard runs before the wrist/palm is re-oriented, so a
+      // hand that turns its palm into the chest can still finish a few cm
+      // inside it. Measure the posed palm now and nudge the arm forward,
+      // re-solving immediately rather than waiting for the next frame.
+      if (st.torsoProfile && st.armTgt && st.armTgt.side === side) {
+        const hand = st.bones[side + 'Hand'];
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          if (hand) hand.node.updateWorldMatrix(true, true);
+          let need = handPenetration(st, side);
+          // The sampled palm points can miss a fingertip. Also require the
+          // hand's measured rear extent to clear the chest surface, the same
+          // conservative test `__vrmBody` reports.
+          if (hand) {
+            const wrist = hand.node.getWorldPosition(_handV);
+            // handBackExtent() reuses _handV, so snapshot the wrist first.
+            const wx = wrist.x;
+            const wy = wrist.y;
+            const wz = wrist.z;
+            const surf = torsoSurfaceAt(st.torsoProfile, wy);
+            if (surf && Math.abs(wx - surf.axisX) < surf.halfX + 0.02) {
+              const back = handBackExtent(st, side);
+              const deficit = surf.front + HAND_CLEARANCE - (wz - back);
+              if (deficit > need) need = deficit;
+            }
+          }
+          if (need <= HAND_CLEARANCE) break;
+          const t = new THREE.Vector3().fromArray(st.armTgt.t);
+          t.z += need + HAND_CLEARANCE;
+          applyArmAt(side, t, dt, true);
+          st.viol.chest = (st.viol.chest || 0) + 1;
+        }
       }
     };
 
@@ -1487,6 +1619,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         if (cur && cur.frames && cur.frames.length > 0) ds = cur;
       }
       }
+      if (st.resetArms && snapArmsToIdle()) st.resetArms = false;
       if (ds) {
         const fps = ds.fps > 0 ? ds.fps : 25;
         st.frameTimer += dt * PLAYBACK_RATE;
@@ -1850,8 +1983,10 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         st.frameIndex = 0;
         st.frameTimer = 0;
         st.lastWrist = {};
+        st.lastWristQ = {};
         st.lastSingleSide = null;
-        st.gap = { left: 0, right: 0 };
+        st.gap = { left: HAND_GAP_HOLD + 1, right: HAND_GAP_HOLD + 1 };
+        st.resetArms = true;
         return { clip: String(url).split('/').pop(), frames: (data.frames || []).length, fps: data.fps };
       };
       // Palm-orientation probe: does the wrist actually reach its target?
@@ -1914,8 +2049,12 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           const rear = o.z - back;
           const overTorso = surf
             ? Math.abs(o.x - surf.axisX) < surf.halfX + 0.02 : false;
+          const joint = st.arm && st.arm[side];
           out[side] = {
             wrist: o.toArray().map((v) => +v.toFixed(3)),
+            elbow: joint ? joint.lower.node.getWorldPosition(new THREE.Vector3())
+              .toArray().map((v) => +v.toFixed(3)) : null,
+            shoulder: joint ? joint.S.toArray().map((v) => +v.toFixed(3)) : null,
             back: +back.toFixed(4),
             overTorso,
             chestFrontZ: surf ? +surf.front.toFixed(3) : null,
@@ -2074,6 +2213,8 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           let swaps = 0;
           let relaxEvents = 0;
           let holdFrames = 0;
+          let maxPen = 0;
+          let penFrame = null;
           const wasRelaxed = { left: false, right: false };
           let prevSide = null;
           const relaxRun = { left: 0, right: 0 };
@@ -2082,6 +2223,11 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           for (const frame of frames) {
             applyFrame(frame, dt, calib);
             if (st.modelRoot) st.modelRoot.updateMatrixWorld(true);
+            const pen = Math.max(
+              handPenetration(st, 'left'),
+              handPenetration(st, 'right'),
+            );
+            if (pen > maxPen) { maxPen = pen; penFrame = st.frameIndex; }
             const a = st.lastAssign || { sides: [], relaxed: [] };
             if ((a.clusters | 0) >= 2) multiFrames += 1;
             if (a.sides && a.sides.length === 1) {
@@ -2154,6 +2300,8 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
             minGap: Number.isFinite(minGap) ? +minGap.toFixed(4) : null,
             relaxedDevDeg: +relaxedDev.toFixed(1),
             travel: +travel.toFixed(3),
+            maxPen: +maxPen.toFixed(4),
+            penFrame,
             dup: st.viol.dup - dup0,
             sideHold: st.viol.sideHold - hold0,
           });
@@ -2266,6 +2414,11 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           st.frameIndex = 0;
           st.frameTimer = 0;
           st.resetting = false;
+          st.resetArms = true;
+          st.lastWrist = {};
+          st.lastWristQ = {};
+          st.lastSingleSide = null;
+          st.gap = { left: HAND_GAP_HOLD + 1, right: HAND_GAP_HOLD + 1 };
           try {
             data.calib = calibrateSigningSpace(data);
           } catch {
@@ -2290,6 +2443,11 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           st.frameIndex = 0;
           st.frameTimer = 0;
           st.resetting = false;
+          st.resetArms = true;
+          st.lastWrist = {};
+          st.lastWristQ = {};
+          st.lastSingleSide = null;
+          st.gap = { left: HAND_GAP_HOLD + 1, right: HAND_GAP_HOLD + 1 };
           for (const clip of valid) {
             try {
               clip.calib = calibrateSigningSpace(clip);

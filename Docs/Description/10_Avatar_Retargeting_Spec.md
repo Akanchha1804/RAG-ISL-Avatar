@@ -55,7 +55,12 @@ volume, not the wrist point.
    clears that surface by at least `HAND_CLEARANCE`. Sampling the span rather
    than the wrist height alone is what stops a single band dropout (or the
    bust apex) from undoing the guard. The push is capped at `HAND_BACK_MAX`
-   so a degenerate hand orientation can never fling the arm forward.
+   so a degenerate hand orientation can never fling the arm forward. The web
+   build additionally re-measures the posed hand **after** the wrist and
+   finger rotations are applied and re-solves the arm with an unsmoothed
+   target if a palm vertex or the hand's rear extent is still inside; the
+   pre-pose guard alone can miss a hand whose palm rotates into the chest
+   while the wrist target is legal.
 4. **Mesh past the last finger joint** by `FINGER_TIP_MARGIN`; the finger tips
    are geometry, not joints, and hang beyond the final bone.
 5. **Contact assist (namaste clasp).** When the source holds the hands close
@@ -89,7 +94,9 @@ volume, not the wrist point.
    clip left it, and the web's clip-switch blend passes through it instead of
    the rest pose (which popped both arms out to a T-pose between glosses).
    Many corpus signs are one-handed; this idle reproduces the signer's resting
-   hand and does not invent motion for it.
+   hand and does not invent motion for it. The web's signing-arm low-target
+   bend is deliberately disabled while solving the idle target; otherwise it
+   can pull the resting wrist up onto the chest.
 8. **Hold through dropouts, then idle.** A hand does not disappear for one
    frame because the sign ended: the tracker loses it. Short holes are
    bridged by holding that arm's last pose for `HAND_GAP_HOLD` seconds; only a
@@ -99,7 +106,10 @@ volume, not the wrist point.
    frames). Holes longer than `HAND_GAP_HOLD` are missing footage rather than
    a hold and are removed from the data by
    `ISL_MediaPipe/clean_landmarks.py` (R4), so playback continues on the next
-   detected pose instead of freezing.
+   detected pose instead of freezing. The hold is for a dropout **inside** a
+   clip: loading a new clip or a new playlist resets both arms to the solved
+   idle pose and clears the wrist-assignment history, so the previous clip's
+   signing hand is not held on the chest for half a second after the switch.
 9. **Coarticulate, do not reset, between glosses.** A composed sentence plays
    one clip per gloss. Passing through the arms-down idle at every boundary
    reads as a list of words, so the web player crossfades directly into the
@@ -138,6 +148,11 @@ Every value below must be identical in
 
 These look like they belong in the table above and do not:
 
+- **Low-target elbow bend.** When a wrist target sits well inside the torso
+  silhouette, the web limits the solve reach to 75% of the arm length and
+  biases the elbow outward. This is a collision response for this avatar's
+  short arms, not a semantic constant; the idle solve is exempt from it. It is
+  not currently enabled in Unity's `SolveArmAt`.
 - **Sampling budgets.** The web keeps up to 900 points (`PEN_POINT_MAX`) for
   the penetration probe; Unity keeps 300 (`HAND_POINT_MAX`). These are
   performance budgets for two different renderers, not semantics; both are
