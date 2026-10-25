@@ -4,9 +4,8 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# CPU torch and faiss link against the OpenMP runtime, which the slim base
-# does not ship; without it `import torch`/`faiss` fails at container start
-# (the image still builds, which is why CI smoke-starts the image).
+# CPU torch and faiss link against the OpenMP runtime. Install it explicitly
+# rather than relying on it arriving transitively; python:slim is minimal.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libgomp1 \
     && rm -rf /var/lib/apt/lists/*

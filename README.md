@@ -47,7 +47,8 @@ host port the backend can reach, database `isl_avatar`.
 
 **With Docker:** `docker compose up -d --build` (PostgreSQL exposed on
 host port `5433`, which is what the app's default `DATABASE_URL` points
-at).
+at). CI builds both images and smoke-starts them (no models, no DB) on
+every push, so a broken Dockerfile cannot reach `main` unnoticed.
 
 **Without Docker (local install):** the default port 5433 is just the
 docker-compose host mapping — a bare local PostgreSQL listens on 5432.
