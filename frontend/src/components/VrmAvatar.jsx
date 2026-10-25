@@ -545,8 +545,8 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
   const status = modelError
     || (!landmarkUrl && !listKey
       ? (modelReady ? 'Avatar ready' : 'Loading avatar…')
-      : (signing ? `Signing ${landmarkData.frames} frames`
-        : (playlistActive ? `Signing ${landmarkData.clips} clips`
+      : (signing ? `Recorded sentence playback · ${landmarkData.frames} frames`
+        : (playlistActive ? `Experimental gloss playback · ${landmarkData.clips} clips`
           : (modelReady ? 'Loading animation…' : 'Loading avatar…'))));
 
   const stateRef = useRef({
@@ -600,7 +600,10 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
     st.renderer = renderer;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#0f172a');
+    // A little lighter than the old near-black: the avatar's black top needs
+    // to separate from the backdrop, and the white hands need a readable
+    // silhouette on a projector.
+    scene.background = new THREE.Color('#1e293b');
     st.scene = scene;
 
     const camera = new THREE.PerspectiveCamera(30, 1.5, 0.1, 20);
@@ -649,6 +652,11 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
     const fill = new THREE.DirectionalLight(0xbcd2ff, 0.7);
     fill.position.set(-2, 1.5, 1.5);
     scene.add(fill);
+    // Rim light from behind: separates the arms/hair from the backdrop
+    // without changing the animated pose or the avatar material.
+    const rim = new THREE.DirectionalLight(0x93c5fd, 1.2);
+    rim.position.set(-1.5, 2.4, -2.5);
+    scene.add(rim);
 
     const clock = new THREE.Clock();
     let rafId = 0;

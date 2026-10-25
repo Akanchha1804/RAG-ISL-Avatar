@@ -2,15 +2,16 @@ import { useState } from 'react';
 
 // One-click demo sentences. Every entry is a curated corpus sentence whose
 // glosses all have landmark clips (verified against the running backend), so
-// a click cannot land on "Signed 0 of N" in front of a judge. The Hindi entry
-// also demonstrates the hi->en translation stage.
+// a click cannot land on "Signed 0 of N" in front of a judge. The first four
+// are the hackathon demo set, ordered for a short run; the rest are extras.
+// The Hindi entry also demonstrates the hi->en translation stage.
 const EXAMPLES = [
   'hi how are you',
   'help me',
   'do not worry',
+  'congratulations',
   'are you free today',
   'can you repeat that please',
-  'congratulations',
   'सुप्रभात',
 ];
 

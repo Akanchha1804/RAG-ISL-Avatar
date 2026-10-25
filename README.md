@@ -24,16 +24,18 @@ signers.
 
 1. **Windows:** double-click `start-dev.bat`. It picks a free port, waits for
    the API, warms the models, and opens <http://localhost:5173>.
-2. Click an example under the text box — each one is a curated sentence whose
-   glosses all have motion:
-   `hi how are you` · `help me` · `do not worry` · `are you free today` ·
-   `can you repeat that please` · `congratulations` · `सुप्रभात`
+2. Click one of the four demo sentences under the text box:
+   `hi how are you` · `help me` · `do not worry` · `congratulations`. The two
+   extra chips (`are you free today`, `can you repeat that please`) and the
+   Hindi chip are verified alternatives if there is time.
 3. Follow the panel: input → `TRANSLATED (HI → EN)` (Hindi only) → ISL glosses
    in ISL order → avatar. The composed path is labelled `Experimental gloss
    playback`; a curated sentence plays its sentence-level capture with a
    neutral face. The Hindi chip uses the composed path.
-4. Optional: switch to **Voice Input** and say "good morning". The first voice
-   request loads Whisper on CPU (~20 s); later ones are quick.
+4. **Voice is disabled in this live-demo build.** The tab is marked
+   `Text-only live demo` because the CPU Whisper model is not prewarmed; the
+   voice path remains in the code and can be re-enabled after it is warmed and
+   tested.
 
 What the demo shows:
 

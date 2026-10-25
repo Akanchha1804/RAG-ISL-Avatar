@@ -18,6 +18,12 @@ import {
 // warming the STT model at backend startup.
 const REQUEST_TIMEOUT_MS = 180000;
 
+// The CPU Whisper model is not prewarmed for the live hackathon demo, so a
+// first voice request would start a slow download/load in front of judges.
+// Keep the voice path intact, but keep the tab disabled until it is warmed
+// and tested; flip this only after that verification.
+const VOICE_DEMO_ENABLED = false;
+
 const STAGE_ORDER = ['transcribing', 'retrieving', 'generating', 'animating'];
 
 const stageLabel = {
@@ -213,14 +219,23 @@ function App() {
                 </button>
                 <button
                   onClick={() => setMode('voice')}
+                  disabled={!VOICE_DEMO_ENABLED}
+                  title={!VOICE_DEMO_ENABLED ? 'Voice input is disabled for this text-only live demo' : undefined}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    mode === 'voice'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                    !VOICE_DEMO_ENABLED
+                      ? 'cursor-not-allowed bg-white/5 text-gray-500'
+                      : mode === 'voice'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-white/10 text-gray-300 hover:bg-white/20'
                   }`}
                 >
                   Voice Input
                 </button>
+                {!VOICE_DEMO_ENABLED && (
+                  <span className="self-center text-xs text-slate-400">
+                    Text-only live demo
+                  </span>
+                )}
               </div>
 
               {mode === 'text' ? (
