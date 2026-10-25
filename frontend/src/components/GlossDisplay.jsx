@@ -59,12 +59,17 @@ export default function GlossDisplay({ result }) {
         </div>
       )}
 
-      {result.translation && result.translation.translated_text && (
+      {result.translation
+        && (result.translation.translated_text || result.translation.warning) && (
         <div>
-          <span className="text-xs text-slate-400 uppercase">
-            Translated ({result.translation.detected_language} → en)
-          </span>
-          <p className="text-slate-100">{result.translation.translated_text}</p>
+          {result.translation.translated_text && (
+            <>
+              <span className="text-xs text-slate-400 uppercase">
+                Translated ({result.translation.detected_language} → en)
+              </span>
+              <p className="text-slate-100">{result.translation.translated_text}</p>
+            </>
+          )}
           {result.translation.warning && (
             <span className="text-xs text-amber-300">{result.translation.warning}</span>
           )}

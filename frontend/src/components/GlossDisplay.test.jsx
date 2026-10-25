@@ -79,4 +79,40 @@ describe('GlossDisplay coverage', () => {
     expect(screen.getByText(/Signed 1 of 2 glosses/)).toBeTruthy();
     expect(screen.getByText('Not in vocabulary: Rahul')).toBeTruthy();
   });
+
+  it('shows the English conversion for Hindi input', () => {
+    render(
+      <GlossDisplay
+        result={composedResult({
+          input_text: 'सुप्रभात',
+          gloss_sequence: ['GOOD', 'MORNING'],
+          glosses: 'GOOD MORNING',
+          translation: {
+            detected_language: 'hi',
+            source_text: 'सुप्रभात',
+            translated_text: 'Good morning',
+          },
+        })}
+      />,
+    );
+    expect(screen.getByText('Translated (hi → en)')).toBeTruthy();
+    expect(screen.getByText('Good morning')).toBeTruthy();
+  });
+
+  it('shows why Hindi input was not translated', () => {
+    render(
+      <GlossDisplay
+        result={composedResult({
+          input_text: 'सुप्रभात',
+          translation: {
+            detected_language: 'hi',
+            source_text: 'सुप्रभात',
+            translated_text: null,
+            warning: 'translation unavailable; original text used',
+          },
+        })}
+      />,
+    );
+    expect(screen.getByText('translation unavailable; original text used')).toBeTruthy();
+  });
 });

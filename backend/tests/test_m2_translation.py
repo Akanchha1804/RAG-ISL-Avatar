@@ -143,3 +143,33 @@ def test_ws_hindi_carries_translation(monkeypatch, client):
         assert complete["status"] == "done"
         assert complete["result"]["translation"]["translated_text"] == "Please help me"
         assert complete["result"]["glosses"] == "PLEASE ME HELP"
+
+
+def test_marian_checkpoint_uses_explicit_classes(tmp_path):
+    """transformers 5's AutoTokenizer cannot build Marian's slow tokenizer.
+
+    Regression: load_model() used AutoTokenizer, which raised "Unrecognized
+    configuration class ... to build an AutoTokenizer" for opus-mt-hi-en and
+    silently disabled Hindi translation for the life of the process.
+
+    A minimal local config keeps this offline: it only exercises the class
+    dispatch, never a download or a weight load.
+    """
+    import mt
+
+    (tmp_path / "config.json").write_text('{"model_type": "marian"}', encoding="utf-8")
+
+    tokenizer_cls, model_cls = mt._tokenizer_and_model_classes(str(tmp_path))
+    assert tokenizer_cls.__name__ == "MarianTokenizer"
+    assert model_cls.__name__ == "MarianMTModel"
+
+
+def test_other_checkpoints_keep_auto_classes(tmp_path):
+    """The Marian special case must not break the MT_MODEL override path."""
+    import mt
+
+    (tmp_path / "config.json").write_text('{"model_type": "t5"}', encoding="utf-8")
+
+    tokenizer_cls, model_cls = mt._tokenizer_and_model_classes(str(tmp_path))
+    assert tokenizer_cls.__name__ == "AutoTokenizer"
+    assert model_cls.__name__ == "AutoModelForSeq2SeqLM"

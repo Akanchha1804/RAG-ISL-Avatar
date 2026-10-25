@@ -62,6 +62,29 @@ def is_unsupported_script(text: str) -> bool:
     return not LATIN_RE.search(text) and not DEVANAGARI_RE.search(text)
 
 
+def _tokenizer_and_model_classes(model_name: str):
+    """Classes that can actually load this checkpoint.
+
+    transformers 5 removed slow tokenizers from AutoTokenizer, and the OPUS
+    Marian checkpoints ship only a slow sentencepiece tokenizer, so
+    AutoTokenizer.from_pretrained(<marian>) raises "Unrecognized
+    configuration class ... to build an AutoTokenizer". Marian's explicit
+    classes still work (sentencepiece is pinned in requirements.txt); every
+    other checkpoint keeps the auto mapping.
+    """
+    from transformers import AutoConfig
+
+    config = AutoConfig.from_pretrained(model_name)
+    if config.model_type == "marian":
+        from transformers import MarianMTModel, MarianTokenizer
+
+        return MarianTokenizer, MarianMTModel
+
+    from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+
+    return AutoTokenizer, AutoModelForSeq2SeqLM
+
+
 def load_model() -> bool:
     global _model, _tokenizer, _load_failed
     if _model is not None:
@@ -69,11 +92,11 @@ def load_model() -> bool:
     if _load_failed or DISABLED:
         return False
     try:
-        from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+        tokenizer_cls, model_cls = _tokenizer_and_model_classes(MODEL_NAME)
 
         print(f"[MT] Loading {MODEL_NAME} (hi->en)...")
-        _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-        _model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME)
+        _tokenizer = tokenizer_cls.from_pretrained(MODEL_NAME)
+        _model = model_cls.from_pretrained(MODEL_NAME)
         print("[MT] Model loaded.")
         return True
     except Exception as e:

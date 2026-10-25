@@ -25,6 +25,9 @@ sqlalchemy[asyncio]==2.1.5
 alembic==1.20.0
 greenlet==3.5.6
 transformers==5.20.1
+# MarianTokenizer (the only tokenizer opus-mt-hi-en ships) is a slow
+# sentencepiece tokenizer; transformers 5's AutoTokenizer no longer builds it.
+sentencepiece==0.2.2
 torch==2.14.1
 pytest==9.1.1
 # fastapi.testclient.TestClient (used by backend/tests) requires httpx.
