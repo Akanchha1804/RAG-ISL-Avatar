@@ -2315,3 +2315,12 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
     </div>
   );
 }
+
+// WebGL playback is built once in a mount effect, so React Fast Refresh cannot
+// swap the animation loop in place. A hot update can leave the old loop running
+// against a half-updated module graph - a missing constant turns the frame
+// timer into NaN and the avatar freezes. Remounting this component is cheap, so
+// take a full page reload instead. Dev only; production has no import.meta.hot.
+if (import.meta.hot) {
+  import.meta.hot.accept(() => window.location.reload());
+}
