@@ -2,15 +2,27 @@ services:
   - type: web
     name: isl-avatar-backend
     runtime: python
-    buildCommand: pip install -r requirements.txt
+    # 3.12, not 3.11: numpy 2.5.4 declares that floor, so the install fails
+    # outright on an older interpreter.
+    # CPU-only torch first, exactly like backend/Dockerfile and CI; without the
+    # index the default wheel is the 2.5 GB CUDA build for a CPU service.
+    buildCommand: >-
+      pip install --no-cache-dir torch
+      --index-url https://download.pytorch.org/whl/cpu &&
+      pip install --no-cache-dir -r requirements.txt
+      --extra-index-url https://download.pytorch.org/whl/cpu
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
     envVars:
       - key: PYTHON_VERSION
-        value: "3.11.0"
-      # rootDir=backend so only backend/ is present; paths.py falls back to
-      # backend-local landmarks/sentence_mapping/dataset.csv
+        value: "3.12.0"
+      # rootDir only sets the working directory: the rest of the checkout is
+      # still on disk, so paths.py finds ISL_MediaPipe/output_landmarks and
+      # the VRM at the repo root. backend/landmarks is the tracked fallback.
       - key: PYTHONUNBUFFERED
         value: "1"
+      # Warm the retrieval/gloss models at boot so the first request is fast.
+      # Give the service at least 1 GB of RAM for torch + MiniLM.
       - key: ISL_WARMUP_MODELS
         value: "1"
     rootDir: backend

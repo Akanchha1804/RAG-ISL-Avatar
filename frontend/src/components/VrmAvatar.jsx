@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VRMLoaderPlugin } from '@pixiv/three-vrm';
-import { apiUrl } from '../config';
+import { apiUrl, resolveUrl } from '../config';
 import {
   clipSwitchJump,
   expressionTargetsFor,
@@ -2232,7 +2232,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       return undefined;
     }
     const controller = new AbortController();
-    const loadJson = (u) => fetch(u, { signal: controller.signal }).then((res) => {
+    const loadJson = (u) => fetch(resolveUrl(u), { signal: controller.signal }).then((res) => {
       if (!res.ok) throw new Error(`HTTP ${res.status} for ${u}`);
       return res.json();
     });

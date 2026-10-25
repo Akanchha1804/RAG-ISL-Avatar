@@ -114,7 +114,7 @@ function App() {
     setResult(null);
     setPipelineStage('transcribing');
     timeoutRef.current = setTimeout(() => {
-      fail('The request timed out. Is the backend running on port 8000?');
+      fail('The request timed out. Is the backend running? See the README quick start.');
     }, REQUEST_TIMEOUT_MS);
   }, [clearPending, fail]);
 
@@ -176,7 +176,12 @@ function App() {
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <header className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2">ISL Avatar Translator</h1>
-          <p className="text-blue-300">RAG-Augmented Text-to-Indian Sign Language</p>
+          <p className="text-blue-300">
+            English or Hindi in. Indian Sign Language out, signed by a 3D avatar.
+          </p>
+          <p className="mt-1 text-xs uppercase tracking-widest text-slate-400">
+            Retrieval-augmented glossing · Flan-T5 · VRM retargeting
+          </p>
           <div className="mt-2 flex items-center justify-center gap-2 text-sm">
             <span
               className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-400' : 'bg-yellow-400'}`}

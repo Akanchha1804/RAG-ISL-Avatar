@@ -17,6 +17,18 @@ export function apiUrl(path) {
   return `${API_BASE}${path}`;
 }
 
+// The API returns landmark/clip URLs as site-relative paths. When the backend
+// is on another host (VITE_API_URL), those paths have to move with it; an
+// absolute URL is already self-contained and passes through untouched.
+export function withBase(path, base = API_BASE) {
+  if (!path || !path.startsWith('/')) return path;
+  return `${base}${path}`;
+}
+
+export function resolveUrl(path) {
+  return withBase(path, API_BASE);
+}
+
 export function wsUrl(path) {
   if (API_BASE) {
     return API_BASE.replace(/^http/, 'ws') + path;
