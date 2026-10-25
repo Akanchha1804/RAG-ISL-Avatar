@@ -27,6 +27,11 @@ export function expressionTargetsFor(glossSequence) {
   };
 }
 
+// Playback speed for clip frames. The avatar's rigid hands read signs faster
+// than the signer who recorded them, so the demo runs slightly under real
+// time. 1.0 = the clip's recorded rate; 0.85 = 15% slower.
+export const PLAYBACK_RATE = 0.85;
+
 // How far the hands travel from the current clip's last applied frame to the
 // next clip's first frame, in normalised image space. Worst side wins. Used
 // to decide whether a gloss switch can crossfade directly or must pass

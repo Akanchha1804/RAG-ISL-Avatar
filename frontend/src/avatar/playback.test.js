@@ -5,6 +5,7 @@ import {
   clipSwitchJump,
   expressionTargetsFor,
   interpolateFrame,
+  PLAYBACK_RATE,
   signedCoverage,
 } from './playback';
 
@@ -76,6 +77,12 @@ describe('clipSwitchJump', () => {
   it('is Infinity when there is no history or no next frame', () => {
     expect(clipSwitchJump(undefined, frame(hand(0.4)))).toBe(Infinity);
     expect(clipSwitchJump(lastWrist, null)).toBe(Infinity);
+  });
+});
+
+describe('PLAYBACK_RATE', () => {
+  it('runs the demo slightly slower than the recorded clip', () => {
+    expect(PLAYBACK_RATE).toBe(0.85);
   });
 });
 

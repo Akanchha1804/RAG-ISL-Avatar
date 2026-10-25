@@ -147,6 +147,10 @@ These look like they belong in the table above and do not:
 - **Web-only reactive tuning.** `SMOOTHNESS`, `FLEX_LIMITS` and
   `ELBOW_MAX_RAD` serve the browser's per-frame interpolation and are not part
   of the shared geometry.
+- **Playback rate.** The web advances clip time at `PLAYBACK_RATE` (0.85 in
+  `frontend/src/avatar/playback.js`): the avatar's rigid hands read faster than
+  the signer who recorded the clip. Unity still runs at 1.0 until it gets the
+  same knob.
 - **Render-rate sampling.** Clip files carry 25/30 Hz landmarks. The web
   samples between adjacent frames (`interpolateFrame`, with a `HAND_MATCH_MAX`
   of 0.25 normalised units) and solves the retargeter on every rendered frame,

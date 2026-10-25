@@ -7,6 +7,7 @@ import {
   clipSwitchJump,
   expressionTargetsFor,
   interpolateFrame,
+  PLAYBACK_RATE,
 } from '../avatar/playback';
 
 // Test/debug hooks (`HOOKS.__vrm`, `__vrmAdvance`, `__vrmPen`, `__vrmShot`,
@@ -1484,7 +1485,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       }
       if (ds) {
         const fps = ds.fps > 0 ? ds.fps : 25;
-        st.frameTimer += dt;
+        st.frameTimer += dt * PLAYBACK_RATE;
         const frameDuration = 1 / fps;
         while (st.frameTimer >= frameDuration) {
           st.frameTimer -= frameDuration;
