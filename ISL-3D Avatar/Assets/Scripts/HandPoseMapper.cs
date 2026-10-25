@@ -86,9 +86,9 @@ public class HandPoseMapper : MonoBehaviour
     // eased to a wrist target beside the body instead of freezing with the
     // arm straight out. DROP/FWD are fractions of the arm length; LATERAL is
     // the wrist's outward offset from the shoulder.
-    const float IDLE_LATERAL = 0.1f;
-    const float IDLE_DROP = 0.8f;
-    const float IDLE_FWD = 0.12f;
+    const float IDLE_LATERAL = 0.09f;
+    const float IDLE_DROP = 0.78f;
+    const float IDLE_FWD = 0.16f;
 
     // A hand that disappears for a frame or two is a tracker dropout, not the
     // sign ending; hold the last pose this long before easing that arm down
