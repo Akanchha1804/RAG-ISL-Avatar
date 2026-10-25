@@ -89,8 +89,7 @@ volume, not the wrist point.
    clip left it, and the web's clip-switch blend passes through it instead of
    the rest pose (which popped both arms out to a T-pose between glosses).
    Many corpus signs are one-handed; this idle reproduces the signer's resting
-   hand and does not invent motion for it. The result panel labels those
-   source clips.
+   hand and does not invent motion for it.
 8. **Hold through dropouts, then idle.** A hand does not disappear for one
    frame because the sign ended: the tracker loses it. Short holes are
    bridged by holding that arm's last pose for `HAND_GAP_HOLD` seconds; only a

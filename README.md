@@ -29,10 +29,9 @@ signers.
    `hi how are you` · `help me` · `do not worry` · `are you free today` ·
    `can you repeat that please` · `congratulations` · `सुप्रभात`
 3. Follow the panel: input → `TRANSLATED (HI → EN)` (Hindi only) → ISL glosses
-   in ISL order → avatar. The result panel says whether it is replaying a
-   `Recorded sentence clip` or the `Experimental gloss playback` path. The
-   Hindi chip uses the composed path; a curated sentence plays its
-   sentence-level capture instead.
+   in ISL order → avatar. The composed path is labelled `Experimental gloss
+   playback`; a curated sentence plays its sentence-level capture with a
+   neutral face. The Hindi chip uses the composed path.
 4. Optional: switch to **Voice Input** and say "good morning". The first voice
    request loads Whisper on CPU (~20 s); later ones are quick.
 
@@ -42,12 +41,11 @@ What the demo shows:
   `MORNING GOOD`.
 - **ISL word order from the gloss model**, not English order: *are you free
   today* → `TODAY YOU FREE`.
-- **Non-manual markers:** WH questions raise the brows, negation furrows them,
-  timed to the sign they accompany rather than the whole clip.
+- **Non-manual markers (composed playback):** WH questions raise the brows,
+  negation furrows them, timed to the sign they accompany. Recorded sentence
+  clips keep a neutral face because the corpus has hand landmarks only.
 - **Honest coverage:** when a gloss has no recorded motion the panel says
   `Playing 2 of 3 gloss clips` and names the missing word.
-- **Honest sourcing:** composed playback is labelled experimental, and
-  one-handed source clips say so instead of hiding the resting hand.
 - **Coarticulation:** back-to-back clips crossfade at the wrist when the jump is
   small, with a neutral pass at sentence edges.
 
@@ -90,8 +88,8 @@ The long version (and the data-repair story behind the landmarks) is in
 | 101 curated sentences; **68/101 fully covered by recorded motion** | Only **184 of 4,765** glosses (3.9%) have motion |
 | **Recorded sentence playback** (one source clip) | Composed playback is experimental — isolated clips, not fluent ISL |
 | Experimental per-gloss playback, with named misses | Fingerspelling unknown words — needs signer-verified handshapes |
-| NMM (brow raise/furrow) timed per gloss | Full ISL grammar/word-order rules — needs signer validation |
-| One-handed sources replay faithfully and are labelled | Two-handed output for a one-handed source — that would invent signs |
+| NMM (brow raise/furrow) timed per gloss in composed playback | Full ISL grammar/word-order rules — needs signer validation |
+| One-handed sources replay faithfully | Two-handed output for a one-handed source — that would invent signs |
 | Clip crossfades and dropout holds | Reference footage is 10 GB and is not checked in |
 | Web avatar + Unity scene | Unity scene base URL is configurable but unset; no PlayMode CI |
 | History via Postgres, degrades gracefully without it | No auth or rate limiting in demo scope; no Deaf comprehension study |
@@ -104,8 +102,11 @@ The coverage table below has the exact numbers and how to reproduce them.
   does not add ISL grammar, spatial agreement, or non-manual grammar beyond the
   timed brow raise/furrow.
 - **One-handed source clips.** Many recorded signs use one hand; the signer's
-  other hand rests at the hip. The avatar copies the source and the panel
-  labels it. Making the resting hand sign would invent language.
+  other hand rests at the hip. The avatar copies the source. Making the resting
+  hand sign would invent language.
+- **Recorded clips keep a neutral face.** The corpus has hand landmarks only,
+  so the avatar does not add a synthetic brow marker to a recorded sentence.
+  Composed playback applies the timed NMM channel.
 - **Not validated with Deaf signers.** There has been no comprehension study;
   treat the output as a visualisation of retrieved sign footage, not an
   accessibility substitute.

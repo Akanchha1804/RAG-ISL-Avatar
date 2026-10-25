@@ -29,7 +29,6 @@ const stageLabel = {
 
 function App() {
   const [result, setResult] = useState(null);
-  const [sourceInfo, setSourceInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [mode, setMode] = useState('text');
@@ -113,7 +112,6 @@ function App() {
     setLoading(true);
     setError(null);
     setResult(null);
-    setSourceInfo(null);
     setPipelineStage('transcribing');
     timeoutRef.current = setTimeout(() => {
       fail('The request timed out. Is the backend running? See the README quick start.');
@@ -281,12 +279,12 @@ function App() {
               )}
             </div>
 
-            <GlossDisplay result={result} sourceInfo={sourceInfo} />
+            <GlossDisplay result={result} />
           </div>
 
           <div className="bg-white/10 backdrop-blur rounded-xl p-6">
             <h2 className="text-lg font-semibold mb-4 text-center">Avatar Viewport</h2>
-            <AvatarView landmarkUrl={result?.landmark_url || null} animation={result?.animation || null} glossSequence={result?.gloss_sequence || null} onSourceInfo={setSourceInfo} />
+            <AvatarView landmarkUrl={result?.landmark_url || null} animation={result?.animation || null} glossSequence={result?.gloss_sequence || null} />
           </div>
         </div>
       </div>

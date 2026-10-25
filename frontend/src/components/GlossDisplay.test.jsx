@@ -60,25 +60,13 @@ describe('GlossDisplay coverage', () => {
       />,
     );
     expect(screen.queryByText(/^Playing /)).toBeNull();
-    expect(screen.getByText(/Recorded sentence clip/)).toBeTruthy();
+    expect(screen.queryByText(/Experimental gloss playback/)).toBeNull();
   });
 
   it('labels composed playback as experimental, not fluent ISL', () => {
     render(<GlossDisplay result={composedResult()} />);
     expect(screen.getByText(/Experimental gloss playback/)).toBeTruthy();
     expect(screen.getByText(/not a fluent ISL translation/)).toBeTruthy();
-  });
-
-  it('explains when the recorded source uses one hand', () => {
-    render(
-      <GlossDisplay
-        result={composedResult()}
-        sourceInfo={{ mode: 'composed', clips: 2, oneHandedClips: 2, oneHanded: true }}
-      />,
-    );
-    expect(
-      screen.getByText('2 of 2 source clips are largely one-handed; the other hand rests or holds.'),
-    ).toBeTruthy();
   });
 
   it('names tokens that are not in the vocabulary', () => {

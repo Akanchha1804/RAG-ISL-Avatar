@@ -447,61 +447,6 @@ const HAND_GAP_HOLD = 0.5;
 // boundaries move a wrist less than this in normalised image space.
 const SWITCH_JUMP_MAX = 0.4;
 
-// Summarise how many hands the recorded source actually uses. Many corpus
-// signs are one-handed (the signer rests the other hand at the hip); the
-// avatar faithfully copies that, so the result panel must say so instead of
-// letting it read as a broken arm.
-function summarizeHandUsage(frames = []) {
-  const positions = { Left: [], Right: [] };
-  let oneHandFrames = 0;
-  let twoHandFrames = 0;
-  for (const frame of frames) {
-    const found = {};
-    for (const hand of frame.hands || []) {
-      if (!hand || !Array.isArray(hand.landmarks) || hand.landmarks.length !== 21) continue;
-      if (hand.handedness === 'Left' || hand.handedness === 'Right') {
-        if (!found[hand.handedness]) found[hand.handedness] = hand.landmarks[0];
-      }
-    }
-    const n = Object.keys(found).length;
-    if (n === 1) oneHandFrames += 1;
-    if (n === 2) twoHandFrames += 1;
-    for (const side of ['Left', 'Right']) {
-      positions[side].push(found[side] || null);
-    }
-  }
-
-  const travel = { Left: 0, Right: 0 };
-  for (const side of ['Left', 'Right']) {
-    let prev = null;
-    for (const w of positions[side]) {
-      if (!w) { prev = null; continue; }
-      if (prev) travel[side] += Math.hypot(w.x - prev.x, w.y - prev.y);
-      prev = w;
-    }
-  }
-  const present = {
-    Left: positions.Left.filter(Boolean).length,
-    Right: positions.Right.filter(Boolean).length,
-  };
-  const max = Math.max(travel.Left, travel.Right);
-  const min = Math.min(travel.Left, travel.Right);
-  // A hand that never appears, or moves less than a third as far as the other,
-  // is the source's rest hand. A clasped two-hand sign (namaste) moves both
-  // wrists, so it is not flagged.
-  const oneHanded = frames.length > 0 && max > 0.12
-    && (present.Left === 0 || present.Right === 0 || min < max * 0.35);
-
-  return {
-    oneHanded,
-    leftTravel: Number(travel.Left.toFixed(2)),
-    rightTravel: Number(travel.Right.toFixed(2)),
-    oneHandFrames,
-    twoHandFrames,
-    frames: frames.length,
-  };
-}
-
 function calibrateSigningSpace(dataset) {
   const xs = [];
   const ys = [];
@@ -552,16 +497,12 @@ const _tmpQ = new THREE.Quaternion();
 const _tmpV = new THREE.Vector3();
 const _tmpV2 = new THREE.Vector3();
 
-export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, onError, onSourceInfo }) {
+export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, onError }) {
   const mountRef = useRef(null);
   const onErrorRef = useRef(null);
-  const onSourceInfoRef = useRef(null);
   // Keep the latest onError without re-running the setup effect.
   useEffect(() => {
     onErrorRef.current = onError;
-  });
-  useEffect(() => {
-    onSourceInfoRef.current = onSourceInfo;
   });
   // Rendered status is derived (never set inside effects): the model
   // load flag and the landmark dataset change only in async callbacks.
@@ -610,9 +551,13 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
   // when the sequence actually changes.
   const glossKey = Array.isArray(glossSequence) ? glossSequence.join('|') : '';
   useEffect(() => {
-    stateRef.current.exprTarget = expressionTargetsFor(
-      glossKey ? glossKey.split('|') : []);
-  }, [glossKey]);
+    // Recorded sentence clips keep a neutral face: the corpus has hand
+    // landmarks only, so a synthetic brow marker would be invented on top of
+    // the signer's recording. Composed gloss playback keeps the timed NMM.
+    stateRef.current.exprTarget = landmarkUrl
+      ? { surprised: 0, angry: 0 }
+      : expressionTargetsFor(glossKey ? glossKey.split('|') : []);
+  }, [glossKey, landmarkUrl]);
 
   // ---- one-time three.js setup + VRM load ----
   useEffect(() => {
@@ -2298,7 +2243,6 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       st.frameTimer = 0;
       st.blend = null;
       st.resetting = true;
-      onSourceInfoRef.current?.(null);
     };
     if (!url && urls.length === 0) {
       clearPlayback();
@@ -2328,11 +2272,6 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
             data.calib = null;
           }
           setLandmarkData({ url, frames: data.frames.length, clips: 0 });
-          onSourceInfoRef.current?.({
-            mode: 'sentence',
-            clips: 1,
-            ...summarizeHandUsage(data.frames),
-          });
         })
         .catch((err) => {
           if (err && err.name === 'AbortError') return;
@@ -2359,15 +2298,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
             }
           }
           const total = valid.reduce((n, d) => n + d.frames.length, 0);
-          const summaries = valid.map((d) => summarizeHandUsage(d.frames));
-          const oneHandedClips = summaries.filter((s) => s.oneHanded).length;
           setLandmarkData({ url: listKey, frames: total, clips: valid.length });
-          onSourceInfoRef.current?.({
-            mode: 'composed',
-            clips: valid.length,
-            oneHandedClips,
-            oneHanded: oneHandedClips > 0,
-          });
         })
         .catch((err) => {
           if (err && err.name === 'AbortError') return;

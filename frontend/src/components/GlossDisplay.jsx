@@ -1,6 +1,6 @@
 import { signedCoverage } from '../avatar/playback';
 
-export default function GlossDisplay({ result, sourceInfo }) {
+export default function GlossDisplay({ result }) {
   if (!result) return null;
 
   // Glosses arrive as a string from the API; tolerate an array too so a
@@ -25,33 +25,17 @@ export default function GlossDisplay({ result, sourceInfo }) {
   const coverage = signedCoverage(
     glosses, result.animation, result.landmark_url);
   const { composed, signed: signedCount, missing } = coverage;
-  // Sentence-level playback is one recorded clip; a playlist is the
-  // experimental gloss-by-gloss path. Keep the distinction visible: the demo
-  // must not imply that isolated gloss clips add up to fluent ISL.
-  const mode = result.landmark_url ? 'sentence' : composed ? 'composed' : null;
-
+  // A playlist is the experimental gloss-by-gloss path. Keep that visible:
+  // the demo must not imply that isolated clips add up to fluent ISL.
   return (
     <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
       <h3 className="font-semibold text-white">Translation Result</h3>
 
-      {mode === 'sentence' && (
-        <div className="rounded border border-emerald-400/30 bg-emerald-400/10 p-2 text-xs text-emerald-200">
-          <span className="font-semibold">Recorded sentence clip.</span>{' '}
-          Replaying one recorded ISL sentence.
-        </div>
-      )}
-      {mode === 'composed' && (
+      {composed && (
         <div className="rounded border border-amber-400/30 bg-amber-400/10 p-2 text-xs text-amber-200">
           <span className="font-semibold">Experimental gloss playback.</span>{' '}
           Separate recorded gloss clips, not a fluent ISL translation.
         </div>
-      )}
-      {sourceInfo?.oneHanded && (
-        <p className="text-xs text-amber-300">
-          {sourceInfo.mode === 'composed'
-            ? `${sourceInfo.oneHandedClips} of ${sourceInfo.clips} source clips are largely one-handed; the other hand rests or holds.`
-            : 'One hand does most of the motion in this source clip; the other rests or holds.'}
-        </p>
       )}
 
       {result.input_text && (
