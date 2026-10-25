@@ -46,10 +46,23 @@ if not exist "%ROOT%\frontend\node_modules" (
 REM ---- pick a port ---------------------------------------------------------
 REM 8000 is the documented default; fall back to 8010 when another service
 REM (this machine has one) already owns it. Vite's proxy follows the URL.
+netstat -ano | findstr ":5173" | findstr "LISTENING" >nul 2>&1
+if not errorlevel 1 (
+  echo [error] Port 5173 is already in use. Close the other frontend window and re-run.
+  echo.
+  goto :end
+)
+
 set "PORT=8000"
 netstat -ano | findstr ":8000" | findstr "LISTENING" >nul 2>&1
 if not errorlevel 1 (
   set "PORT=8010"
+  netstat -ano | findstr ":8010" | findstr "LISTENING" >nul 2>&1
+  if not errorlevel 1 (
+    echo [error] Ports 8000 and 8010 are both in use. Stop one of them and re-run.
+    echo.
+    goto :end
+  )
   echo [port] 8000 is busy - using 8010 instead.
 )
 
@@ -67,7 +80,7 @@ popd
 set /a TRIES=0
 :waitloop
 set /a TRIES+=1
-curl -s -o nul "http://127.0.0.1:!PORT!/api/health" >nul 2>&1
+curl -s --max-time 10 -o nul "http://127.0.0.1:!PORT!/api/health" >nul 2>&1
 if not errorlevel 1 goto :warm
 if !TRIES! GEQ 45 (
   echo [warn] Backend did not answer after 90 s - starting the UI anyway.

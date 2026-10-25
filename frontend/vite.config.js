@@ -10,6 +10,10 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     port: 5173,
+    // Fail loudly instead of silently moving to 5174: the launcher and the
+    // README both promise http://localhost:5173, and a second instance on
+    // 5174 would leave the opened tab pointing at the old frontend.
+    strictPort: true,
     proxy: {
       '/api': {
         target: BACKEND,
