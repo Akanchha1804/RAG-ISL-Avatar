@@ -459,6 +459,11 @@ const IDLE_DROP = 0.78;
 const IDLE_FWD = 0.16;
 // Load-time convergence budget for the idle solve (per side, at 60 Hz).
 const IDLE_SETTLE_STEPS = 240;
+// A held hand's tracked wrist still jitters by a few millimetres. Retargeting
+// that noise every frame makes a resting hand vibrate (and toggles the chest
+// clamp on/off). Hold the previous IK target until the source has actually
+// moved by this much.
+const ARM_STILL_DEADBAND = 0.008;
 
 // A hand that disappears for a frame or two is a tracker dropout, not the
 // sign ending: 164 such holes sit inside the shipped clips (median 2 frames,
@@ -571,7 +576,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
     exprTarget: { surprised: 0, angry: 0 },
     exprCurrent: { surprised: 0, angry: 0 },
     // Joint-safety violation counters (headless proof the fixes engage).
-    viol: { curl: 0, elbow: 0, torso: 0, skipped: 0, dup: 0, wcap: 0, sideHold: 0 },
+    viol: { curl: 0, elbow: 0, torso: 0, skipped: 0, dup: 0, wcap: 0, sideHold: 0, palmFlip: 0 },
   });
 
   // Non-manual targets follow the gloss sequence (derived, never set in
@@ -1091,10 +1096,10 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         .addScaledVector(perp, Math.sin(angA)).normalize();
       // Forward guard: the upper arm must never point clearly behind the
       // torso plane (VRM faces +Z) or the mesh disappears into the chest.
-      // Threshold sits just behind neutral so relaxed hanging arms (z≈0)
-      // pass through untouched and only true backward aims are fixed.
-      if (upperDir.z < -0.03) {
-        upperDir.z = -0.03;
+      // Keep the elbow a touch in front of the shoulder plane as well: an arm
+      // lying exactly on the chest plane is swallowed by the bust silhouette.
+      if (upperDir.z < 0.02) {
+        upperDir.z = 0.02;
         upperDir.normalize();
         st.viol.elbow += 1;
       }
@@ -1102,7 +1107,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       // Elbow collision: keep the joint out of the torso too.
       if (st.torsoHips && st.torsoNeck) {
         if (clampOutsideCapsule(elbowPos, st.torsoHips, st.torsoNeck,
-          st.torsoRadius, elbowPos)) st.viol.torso += 1;
+          st.torsoRadius + 0.03, elbowPos)) st.viol.torso += 1;
       }
       let foreDir = target.clone().sub(elbowPos).normalize();
       // Elbow hinge clamp (max 150 deg): hyperextended elbows read as broken.
@@ -1170,8 +1175,23 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       const target = new THREE.Vector3(
         C.x + (w.x - 0.5) * LAT_GAIN + clasp,
         C.y + 0.02 + (0.5 - w.y) * 0.7,
-        Math.max(C.z + 0.3 - w.z * 0.4, C.z + 0.06),
+        Math.max(C.z + 0.3 - w.z * 0.4, C.z + 0.12),
       );
+      // Deadband on the SOURCE wrist, so the held pose is the last real one,
+      // not a slightly different pose solved from each noisy sample. Cleared
+      // during the two-hand contact assist, which deliberately moves targets.
+      st.armHold = st.armHold || {};
+      if (!st.claspAdj) {
+        const src = new THREE.Vector3(w.x, w.y, w.z);
+        const held = st.armHold[side];
+        if (held && src.distanceTo(held.src) < ARM_STILL_DEADBAND) {
+          target.copy(held.tgt);
+        } else {
+          st.armHold[side] = { src, tgt: target.clone() };
+        }
+      } else {
+        st.armHold[side] = null;
+      }
       applyArmAt(side, target, dt);
     };
 
@@ -1286,6 +1306,9 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       st.gap = { left: HAND_GAP_HOLD + 1, right: HAND_GAP_HOLD + 1 };
       st.lastWrist = {};
       st.lastWristQ = {};
+      st.lastPalmBasis = {};
+      st.palmFlipRun = {};
+      st.armHold = {};
       st.lastSingleSide = null;
       st.claspAdj = null;
       st.claspInfo = null;
@@ -1333,6 +1356,35 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
       } else {
         return;
       }
+      // A palm normal recovered from a flat 2D hand is sign-ambiguous: when
+      // the hand is edge-on the cross product can jump to the opposite side
+      // and the wrist spins 180 degrees. Keep the sign continuous with the
+      // last good frame (flip y+z together, so the basis stays a rotation).
+      st.lastPalmBasis = st.lastPalmBasis || {};
+      st.palmFlipRun = st.palmFlipRun || {};
+      const prevPalm = st.lastPalmBasis[side];
+      if (prevPalm && lmB.z.dot(prevPalm.z) < 0) {
+        const run = (st.palmFlipRun[side] || 0) + 1;
+        st.palmFlipRun[side] = run;
+        // An isolated opposite normal is edge-on noise; a real palm turn
+        // persists, so accept it after a few frames instead of locking the
+        // wrist 180 degrees away from the source for the whole clip.
+        if (run < 3) {
+          lmB = {
+            x: lmB.x.clone(),
+            y: lmB.y.clone().negate(),
+            z: lmB.z.clone().negate(),
+          };
+          st.viol.palmFlip = (st.viol.palmFlip || 0) + 1;
+        } else {
+          st.palmFlipRun[side] = 0;
+        }
+      } else {
+        st.palmFlipRun[side] = 0;
+      }
+      st.lastPalmBasis[side] = {
+        x: lmB.x.clone(), y: lmB.y.clone(), z: lmB.z.clone(),
+      };
       // Clasp palm roll: a landmark basis can only ever say "flat to the
       // camera", so a palms-together pose leaves the wrists un-pronated and
       // both palms pointing at the viewer. When the hands are clasped,
@@ -1377,7 +1429,7 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         // instead of jumping; normal signing passes through untouched.
         st.lastWristQ = st.lastWristQ || {};
         const prevQ = st.lastWristQ[side];
-        const maxStep = 7 * Math.max(dt, 1e-3);
+        const maxStep = 4.5 * Math.max(dt, 1e-3);
         let goal = target;
         if (prevQ) {
           const step = prevQ.angleTo(target);
@@ -1389,7 +1441,9 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           }
         }
         st.lastWristQ[side] = goal.clone();
-        smoothWithDt(handEntry.node, goal, dt);
+        // Slightly softer wrist follow: tracker noise must not read as a
+        // twitch, while the fingers still inherit the actual hand rotation.
+        smoothWithDt(handEntry.node, goal, dt, 0.7);
         // The hand's ACTUAL world rotation change this frame, i.e. after the
         // velocity cap and smoothing, so the fingers stay welded to the hand.
         handEntry.node.updateWorldMatrix(true, false);
@@ -1992,6 +2046,9 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
         st.frameTimer = 0;
         st.lastWrist = {};
         st.lastWristQ = {};
+        st.lastPalmBasis = {};
+      st.palmFlipRun = {};
+        st.armHold = {};
         st.lastSingleSide = null;
         st.gap = { left: HAND_GAP_HOLD + 1, right: HAND_GAP_HOLD + 1 };
         st.resetArms = true;
@@ -2208,6 +2265,10 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           st.playlist = null;
           st.blend = null;
           st.lastWrist = {};
+          st.lastWristQ = {};
+          st.lastPalmBasis = {};
+      st.palmFlipRun = {};
+          st.armHold = {};
           st.lastSingleSide = null;
           st.gap = { left: 0, right: 0 };
           const dup0 = st.viol.dup;
@@ -2425,6 +2486,9 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           st.resetArms = true;
           st.lastWrist = {};
           st.lastWristQ = {};
+          st.lastPalmBasis = {};
+      st.palmFlipRun = {};
+          st.armHold = {};
           st.lastSingleSide = null;
           st.gap = { left: HAND_GAP_HOLD + 1, right: HAND_GAP_HOLD + 1 };
           try {
@@ -2454,6 +2518,9 @@ export default function VrmAvatar({ landmarkUrl, playlistUrls, glossSequence, on
           st.resetArms = true;
           st.lastWrist = {};
           st.lastWristQ = {};
+          st.lastPalmBasis = {};
+      st.palmFlipRun = {};
+          st.armHold = {};
           st.lastSingleSide = null;
           st.gap = { left: HAND_GAP_HOLD + 1, right: HAND_GAP_HOLD + 1 };
           for (const clip of valid) {
