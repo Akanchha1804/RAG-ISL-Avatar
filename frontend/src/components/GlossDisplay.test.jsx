@@ -3,12 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import GlossDisplay from './GlossDisplay';
 
-const playable = (gloss) => ({
-  gloss,
-  landmark_clip_url: `/landmarks/${gloss.toLowerCase()}.json`,
-});
-
-function composedResult(overrides = {}) {
+function result(overrides = {}) {
   return {
     input_text: 'hello morning',
     glosses: 'HELLO MORNING',
@@ -17,7 +12,7 @@ function composedResult(overrides = {}) {
     landmark_url: '',
     landmark_file: '',
     animation: {
-      clip_playlist: [playable('HELLO'), { gloss: 'MORNING', landmark_clip_url: null }],
+      clip_playlist: [],
       unresolved_tokens: [],
       unsupported_tokens: ['MORNING'],
       retrieval_detail: { level: 'composed', store: 'json' },
@@ -26,71 +21,34 @@ function composedResult(overrides = {}) {
   };
 }
 
-describe('GlossDisplay coverage', () => {
-  it('says how many gloss clips play and names the rest', () => {
-    render(<GlossDisplay result={composedResult()} />);
-    expect(screen.getByText('Playing 1 of 2 gloss clips')).toBeTruthy();
-    expect(screen.getByText('Not signed (no motion yet): MORNING')).toBeTruthy();
-  });
-
-  it('says all gloss clips play when every clip has motion', () => {
-    render(
-      <GlossDisplay
-        result={composedResult({
-          animation: {
-            clip_playlist: [playable('HELLO'), playable('MORNING')],
-            unresolved_tokens: [],
-            unsupported_tokens: [],
-          },
-        })}
-      />,
-    );
-    expect(screen.getByText('Playing all 2 gloss clips')).toBeTruthy();
-    expect(screen.queryByText(/Not signed/)).toBeNull();
-  });
-
-  it('does not apply the composed counter to a sentence-level clip', () => {
-    render(
-      <GlossDisplay
-        result={composedResult({
-          landmark_url: '/landmarks/hello_morning.json',
-          landmark_file: 'hello_morning.json',
-          animation: { clip_playlist: [playable('HELLO')], unresolved_tokens: [] },
-        })}
-      />,
-    );
-    expect(screen.queryByText(/^Playing /)).toBeNull();
-    expect(screen.queryByText(/Experimental gloss playback/)).toBeNull();
-  });
-
-  it('labels composed playback as experimental, not fluent ISL', () => {
-    render(<GlossDisplay result={composedResult()} />);
-    expect(screen.getByText(/Experimental gloss playback/)).toBeTruthy();
-    expect(screen.getByText(/not a fluent ISL translation/)).toBeTruthy();
+describe('GlossDisplay', () => {
+  it('states that this build has no sign animation', () => {
+    render(<GlossDisplay result={result()} />);
+    expect(screen.getByText('No sign animation in this build: glosses only.')).toBeTruthy();
+    expect(screen.queryByText(/Playing .* gloss clips/)).toBeNull();
   });
 
   it('names tokens that are not in the vocabulary', () => {
     render(
       <GlossDisplay
-        result={composedResult({
+        result={result({
           gloss_sequence: ['HELLO', 'Rahul'],
           glosses: 'HELLO Rahul',
           animation: {
-            clip_playlist: [playable('HELLO')],
+            clip_playlist: [],
             unresolved_tokens: ['Rahul'],
             unsupported_tokens: ['Rahul'],
           },
         })}
       />,
     );
-    expect(screen.getByText(/Playing 1 of 2 gloss clips/)).toBeTruthy();
     expect(screen.getByText('Not in vocabulary: Rahul')).toBeTruthy();
   });
 
   it('shows the English conversion for Hindi input', () => {
     render(
       <GlossDisplay
-        result={composedResult({
+        result={result({
           input_text: 'सुप्रभात',
           gloss_sequence: ['GOOD', 'MORNING'],
           glosses: 'GOOD MORNING',
@@ -109,7 +67,7 @@ describe('GlossDisplay coverage', () => {
   it('shows why Hindi input was not translated', () => {
     render(
       <GlossDisplay
-        result={composedResult({
+        result={result({
           input_text: 'सुप्रभात',
           translation: {
             detected_language: 'hi',

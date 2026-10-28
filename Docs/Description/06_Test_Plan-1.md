@@ -63,9 +63,9 @@ Tests never import the real `rag` module (sentence-transformers is slow); `conft
 
 ### 3.3 System Testing
 - End-to-end demo walkthrough covering at least 20 representative sentences across the supported vocabulary
-- Cross-browser check (Chrome, Firefox, Edge) for WebGL/avatar rendering compatibility
+- Cross-browser check (Chrome, Firefox, Edge) for the text/gloss UI
 - Docker container build-and-run verification on a clean machine (reproducibility check)
-- Unity: open project in Unity 6, enter Play mode, confirm `LandmarkModels.cs` compiles (no local CLI compile available)
+- Unity: open the project in Unity 6 and confirm it imports without compile errors (the animation scripts were removed in the animation reset; no local CLI compile available)
 
 ### 3.4 Non-Functional Testing
 

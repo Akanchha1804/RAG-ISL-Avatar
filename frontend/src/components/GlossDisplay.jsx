@@ -1,5 +1,3 @@
-import { signedCoverage } from '../avatar/playback';
-
 export default function GlossDisplay({ result }) {
   if (!result) return null;
 
@@ -17,26 +15,12 @@ export default function GlossDisplay({ result }) {
   const similarity =
     typeof result.similarity === 'number' ? result.similarity : null;
 
-  // Composed playback signs one clip per gloss. A gloss whose entry has no
-  // landmark clip is not signed at all (the avatar filters it out), so say so
-  // instead of leaving the viewer to notice a missing word. Sentence-level
-  // playback covers every token with one clip, so this counter only applies
-  // when the playlist drives the avatar.
-  const coverage = signedCoverage(
-    glosses, result.animation, result.landmark_url);
-  const { composed, signed: signedCount, missing } = coverage;
-  // A playlist is the experimental gloss-by-gloss path. Keep that visible:
-  // the demo must not imply that isolated clips add up to fluent ISL.
+  // There is no avatar renderer in this build, so the panel only reports what
+  // the backend produced. It says so plainly instead of implying that these
+  // glosses are being signed.
   return (
     <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3">
       <h3 className="font-semibold text-white">Translation Result</h3>
-
-      {composed && (
-        <div className="rounded border border-amber-400/30 bg-amber-400/10 p-2 text-xs text-amber-200">
-          <span className="font-semibold">Experimental gloss playback.</span>{' '}
-          Separate recorded gloss clips, not a fluent ISL translation.
-        </div>
-      )}
 
       {result.input_text && (
         <div>
@@ -127,26 +111,13 @@ export default function GlossDisplay({ result }) {
       )}
 
       <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
-        {composed && glosses.length > 0 && (
-          <span
-            className={signedCount >= glosses.length ? 'text-emerald-300' : 'text-amber-300'}
-          >
-            {signedCount >= glosses.length
-              ? `Playing all ${glosses.length} gloss clips`
-              : `Playing ${signedCount} of ${glosses.length} gloss clips`}
-          </span>
-        )}
+        <span>No sign animation in this build: glosses only.</span>
         {Array.isArray(result.animation?.unresolved_tokens) &&
           result.animation.unresolved_tokens.length > 0 && (
             <span className="text-amber-300">
               Not in vocabulary: {result.animation.unresolved_tokens.join(', ')}
             </span>
           )}
-        {missing.length > 0 && (
-          <span className="text-amber-300">
-            Not signed (no motion yet): {missing.join(', ')}
-          </span>
-        )}
         {result.animation?.suggestions &&
           Object.keys(result.animation.suggestions).length > 0 && (
             <span className="text-slate-400">

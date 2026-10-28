@@ -123,15 +123,15 @@ such as `thank you` stay a single token. E.g. "i am going to school"
 returns `I GO TO SCHOOL`, and "hi" returns `NAMASTE` — every token
 resolving to a sign clip below.
 
-**Animation:** the avatar viewport shows only the project's VRM avatar
-— never video clips. Every entry of the `animation.clip_playlist`
-whose `source` is `cislr_vocabulary` carries a `clip_url`
-(`GET /clips/<uid>.mp4`, the CISLR reference video, API-level) and,
-when a per-gloss landmark clip has been built, a `landmark_clip_url`
-(`GET /landmarks/gloss_<gloss>.json`). The avatar signs the sentence
-landmark file when one exists, and otherwise signs the per-gloss
-landmark clips in sequence. `unresolved_tokens` lists tokens with no
-clip (reported, never an error).
+**Animation:** no avatar renders in this build. The API still reports the
+animation resolution it did before: every entry of
+`animation.clip_playlist` whose `source` is `cislr_vocabulary` carries a
+`clip_url` (`GET /clips/<uid>.mp4`, the CISLR reference video, API-level)
+and, when a per-gloss landmark clip has been built, a `landmark_clip_url`
+(`GET /landmarks/gloss_<gloss>.json`). The resolver still prefers the
+sentence landmark file and otherwise composes the per-gloss landmark
+clips in sequence, but nothing consumes the result yet.
+`unresolved_tokens` lists tokens with no clip (reported, never an error).
 
 `similarity` and `landmark_file` are `null` / `""` for `t5` and
 `word_by_word` (no curated match). For `rag`, a generation whose glosses
@@ -299,18 +299,20 @@ nginx proxy `/clips/` to the backend like `/landmarks/`.
 
 ### 1.12 `GET /avatar/model.vrm`
 The project's VRM avatar model (`ISL-3D Avatar/Assets/model_isl.vrm`,
-served read-only, `404` when the file is absent). The web viewport loads
-this exact file and drives its humanoid hand bones from the landmark
-sequence (`HandPoseMapper` palm-frame retargeting, ported to the browser),
-so the avatar on screen is the project's own model performing the
-translated signs.
+served read-only, `404` when the file is absent).
+
+**Status:** the model is still served, but nothing renders it. The browser
+retargeting/playback pipeline (three.js) was removed in the animation reset
+and no avatar is shown in the web app; the endpoint is kept for a future
+renderer.
 
 ---
 
 ## 2. WebSocket Endpoints
 
 ### 2.1 `WS /api/pipeline/ws`
-Full end-to-end pipeline with streamed status stages (`transcribing` → `retrieving` → `generating` → `animating` → `complete`). Used by the frontend live demo.
+Full end-to-end pipeline with streamed status stages (`transcribing` → `retrieving` → `generating` → `animating` → `complete`). Used by the frontend live demo. The `animating` stage still describes animation *resolution* (mapping glosses to landmark clips); no client-side avatar renderer consumes it in this build.
+
 
 **Client → Server (initial message):**
 ```json

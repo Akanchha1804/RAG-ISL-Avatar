@@ -12,10 +12,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@pixiv/three-vrm": "^3.5.5",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "three": "^0.186.1"
+    "react-dom": "^19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

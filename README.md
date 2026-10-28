@@ -155,11 +155,10 @@ one-click launcher does this automatically).
 # Tests — no GPU and no real models required
 cd backend
 .venv\Scripts\python -m pytest -q    # API, pipeline, retrieval, eval metrics,
-                                     # path resolution, landmark hygiene,
-                                     # web/Unity retargeting conformance
+                                     # path resolution, landmark hygiene
 cd ../frontend
-npm test                             # vitest + jsdom: playback, coverage
-                                     # panel, websocket reconnect, demo chips
+npm test                             # vitest + jsdom: gloss panel, text input,
+                                     # websocket reconnect, config
 ```
 
 The metrics tests and eval harnesses also need the WordNet corpus, a one-time
@@ -246,9 +245,9 @@ Full spec: `Docs/Description/05_API_Specification-1.md`.
 - `backend/` - FastAPI app, RAG, gloss generator, animation resolver, tests (`backend/tests/`, run in CI)
 - `frontend/` — React + Vite UI
 - `ISL_MediaPipe/` — offline landmark extraction: `batch_process.py` (video → landmark JSON + `sentence_mapping.json`), `generate_mapping.py` (mapping repair), `scripts/`
-- `ISL-3D Avatar/` — Unity 6 + UniVRM scripts (`LandmarkModels.cs`, `HandPoseMapper.cs`, `LandmarkLoader.cs`, `LandmarkFetcher.cs`, `AvatarWebSocketClient.cs`)
+- `ISL-3D Avatar/` — Unity 6 + UniVRM project: the avatar model (`model_isl.vrm`) and its assets. The animation scripts were removed in the animation reset.
 - `Dataset/` — ISL-CSLTR and CISLR corpora (10 GB, gitignored)
-- `Docs/Description/` - SRS, system design, API spec, test plan, avatar retargeting spec
+- `Docs/Description/` - SRS, system design, API spec, test plan
 - `notebooks/` — data augmentation and Flan-T5 fine-tuning scripts (run on Colab)
 
 ## Regenerating landmarks
@@ -330,19 +329,11 @@ through. It is idempotent and prints before/after counts:
 regenerated dataset cannot quietly reintroduce the artefacts or the dead
 stretches.
 
-The retargeters themselves no longer trust the label either: they cluster
-detections and assign each to the arm whose previous wrist is nearest. A hand
-that disappears for a frame or two is a tracker dropout, not the sign ending,
-so its arm holds the last pose for `HAND_GAP_HOLD` (0.5 s) before easing to
-the arms-down idle - without that, every dropout dropped the arm to the hip
-and snapped it back, which read as the arm pumping mid-sign. A side with no
-landmarks for longer keeps the pose it started the clip in until the hold
-expires, instead of snapping to the model's T-pose (see
-`Docs/Description/10_Avatar_Retargeting_Spec.md`).
-In a dev build, `__vrmAudit([urls])` in the browser console replays clips
-through the real retargeter and reports, per clip, which arm was driven, hand
-separation, arm-to-idle drops, held frames and wrist travel - the batch check
-that replaces watching each animation.
+The retargeters that used to consume these clips (the three.js/VRM web
+renderer and Unity's `HandPoseMapper`) were removed in the animation reset:
+the motion never converged, so no animation is present in this build. The
+landmark data, the hygiene audit and the animation resolver are kept - they
+are the inputs a new renderer will need - but nothing on screen moves.
 
 ## Deploy notes
 
